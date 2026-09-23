@@ -33,6 +33,9 @@ class DocumentChunk(models.Model):
 
 # 채팅방 테이블
 class ChatSession(models.Model):
+    id = models.UUIDField(
+        primary_key=True,default=uuid.uuid4,editable=False
+    )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
