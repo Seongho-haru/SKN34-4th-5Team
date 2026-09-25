@@ -14,7 +14,7 @@ from contextlib import contextmanager, nullcontext
 from django.utils import timezone
 from langchain_core.callbacks import BaseCallbackHandler
 
-from .models import ChatProgressEvent
+from ..models import ChatProgressEvent
 
 
 MAX_EVENTS = 128

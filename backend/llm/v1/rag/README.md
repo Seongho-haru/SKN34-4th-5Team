@@ -1,4 +1,4 @@
-# llm/rag — KBO 직관 안내 RAG (도메인 분리 구조)
+# llm/v1/rag — KBO 직관 안내 RAG (도메인 분리 구조)
 
 2026-09-15 · 담당: club·course = 형준, venue = 현준
 
@@ -62,17 +62,17 @@ def answer(question: str, history: list[dict] | None, hint_stadium: str | None) 
 
 ## 연결 (백엔드 담당)
 
-프론트 계약(`docs/handoffs/FRONTEND_BACKEND_HANDOFF.md` 7장: `{messages, context}` → `{reply}`)을 구현한 뷰가 `llm/rag_views.py` 에 있다. `config/urls.py` 에 두 줄:
+프론트 계약(`docs/handoffs/FRONTEND_BACKEND_HANDOFF.md` 7장: `{messages, context}` → `{reply}`)을 구현한 뷰가 `llm/v1/rag_views.py` 에 있다. `config/urls.py` 에 두 줄:
 
 ```python
-from llm.rag_views import ChatView
+from llm.v1.rag_views import ChatView
     path("chat/", ChatView.as_view()),     # urlpatterns 안, chat/sessions/ 보다 위나 아래 상관없음
 ```
 
 기존 `chat_service.py`(채팅방 저장 API)에 붙이고 싶으면 RAG 는 이 한 줄이면 된다.
 
 ```python
-from llm.rag.pipeline import answer          # from llm.rag import answer 와 같은 함수
+from llm.v1.rag.pipeline import answer          # from llm.v1.rag import answer 와 같은 함수
 
 result = answer(question,                        # 마지막 user 메시지
                 history=[{"role": "user"|"assistant", "content": "..."}, ...],   # 이번 질문 제외
@@ -117,7 +117,7 @@ docker compose exec backend python manage.py build_index
 
 # 2. Django shell 에서 바로 호출
 docker compose exec backend python manage.py shell
->>> from llm.rag import answer
+>>> from llm.v1.rag import answer
 >>> answer("삼성 몇 위야?")["answer"]                       # 순위: DB 직접조회, LLM 0회
 >>> r = answer("잠실 주차 얼마야?"); r["route"], r["answer"]  # RAG: 임베딩 1회 + LLM 1회
 >>> answer("재입장은?", history=[{"role":"user","content":"잠실 주차 얼마야?"},{"role":"assistant","content":"..."}])["route"]

@@ -6,7 +6,7 @@ from rest_framework import serializers
 from .chat_service import ChatService
 from django.utils import timezone
 
-from .models import ChatMessage, ChatProgressEvent, ChatSession, ChatTurn
+from ..models import ChatMessage, ChatProgressEvent, ChatSession, ChatTurn
 
 
 MAX_HISTORY_MESSAGES = 12

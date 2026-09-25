@@ -1,6 +1,6 @@
 """nearby(카카오 실시간 조회) 단위 테스트 — 네트워크·DB·LLM 없이 돈다.
 
-    cd backend && python -m unittest llm.rag.nearby.test_nearby
+    cd backend && python -m unittest llm.v1.rag.nearby.test_nearby
 """
 import json
 import unittest

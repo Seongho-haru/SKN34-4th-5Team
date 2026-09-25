@@ -1,6 +1,6 @@
 """assistant 파이프라인(프롬프트 · RAG · 에이전트 · 파서) 단위 테스트 — 진짜 LLM·DB·카카오 없이 돈다.
 
-    cd backend && python -m unittest llm.rag.assistant.test_assistant
+    cd backend && python -m unittest llm.v1.rag.assistant.test_assistant
 """
 import json
 import unittest

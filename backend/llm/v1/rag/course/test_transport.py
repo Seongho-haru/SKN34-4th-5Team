@@ -1,6 +1,6 @@
 """course 이동수단·범위 슬롯 단위 테스트 — DB·LLM 없이 돈다.
 
-    cd backend && python -m unittest llm.rag.course.test_transport
+    cd backend && python -m unittest llm.v1.rag.course.test_transport
 """
 import unittest
 

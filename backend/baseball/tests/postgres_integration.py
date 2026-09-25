@@ -25,7 +25,7 @@ from baseball.query_repository import (  # noqa: E402
     BaseballQueryTimeoutError,
 )
 from baseball.query_service import BaseballQueryService  # noqa: E402
-from llm.tools import create_baseball_tools  # noqa: E402
+from llm.v1.tools import create_baseball_tools  # noqa: E402
 
 
 class BaseballPostgresIntegrationTest(unittest.TestCase):

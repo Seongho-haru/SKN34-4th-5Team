@@ -12,9 +12,9 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 
 from .chat_message_histories import DjangoChatMessageHistory
-from .models import ChatSession, ChatTurn
+from ..models import ChatSession, ChatTurn
 from .progress import ProgressCollector, collect, config_kwargs, current
-load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 
 class StaleChatHistoryError(RuntimeError):

@@ -15,9 +15,9 @@ from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool
 from rest_framework.test import APIClient
 
-from .chat_service import ChatService
-from .models import ChatMessage, ChatProgressEvent, ChatSession, ChatTurn
-from .progress import (
+from ..v1.chat_service import ChatService
+from ..models import ChatMessage, ChatProgressEvent, ChatSession, ChatTurn
+from ..v1.progress import (
     MAX_ARGUMENT_BYTES,
     MAX_RESULT_BYTES,
     ProgressCallback,
@@ -30,13 +30,13 @@ from .progress import (
     project_event,
     sanitize,
 )
-from .rag import dispatcher, domain_tools, pipeline as rag_pipeline
-from .rag.assistant import pipeline as assistant
-from .rag.assistant import tools as assistant_tools
-from .rag.pipeline import last_detail
-from .rag.venue import agent as venue
-from .serializers import ChatTurnSerializer
-from .views import RECEIPT_SALT, threaded_stream
+from ..v1.rag import dispatcher, domain_tools, pipeline as rag_pipeline
+from ..v1.rag.assistant import pipeline as assistant
+from ..v1.rag.assistant import tools as assistant_tools
+from ..v1.rag.pipeline import last_detail
+from ..v1.rag.venue import agent as venue
+from ..v1.serializers import ChatTurnSerializer
+from ..v1.views import RECEIPT_SALT, threaded_stream
 
 
 def parse_frame(frame):
@@ -63,7 +63,7 @@ class ProgressApiTest(TransactionTestCase):
         self.client.force_authenticate(self.user)
         self.session = ChatSession.objects.create(user=self.user)
         model = RunnableLambda(lambda _prompt: AIMessage(content="기본 답변"))
-        patcher = patch("llm.chat_service.ChatOpenAI", return_value=model)
+        patcher = patch("llm.v1.chat_service.ChatOpenAI", return_value=model)
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -298,7 +298,7 @@ class ProgressApiTest(TransactionTestCase):
         with (
             patch.object(ChatService, "_run", return_value="답변"),
             patch(
-                "llm.chat_message_histories.DjangoChatMessageHistory.add_messages",
+                "llm.v1.chat_message_histories.DjangoChatMessageHistory.add_messages",
                 side_effect=DatabaseError("message write failed"),
             ),
         ):

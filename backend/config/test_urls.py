@@ -5,7 +5,7 @@ from django.urls import resolve
 
 from baseball.views import RESOURCE_VIEWSETS
 from community.views import CommunityPostListCreateView
-from llm.views import ChatFinalizeView, GuestChatView
+from llm.v1.views import ChatFinalizeView, GuestChatView
 from travel.views import CourseListCreateView
 
 

@@ -5,7 +5,7 @@ from django.db.models import Max
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 
-from .models import ChatSession, ChatMessage
+from ..models import ChatSession, ChatMessage
 
 
 class DjangoChatMessageHistory(BaseChatMessageHistory):

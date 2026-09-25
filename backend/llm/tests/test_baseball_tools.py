@@ -5,7 +5,7 @@ from django.test import SimpleTestCase, override_settings
 
 from baseball.query_repository import BaseballQueryExecutionError, BaseballQueryRepository
 from baseball.query_service import BaseballQueryService
-from llm.tools import create_baseball_tools
+from llm.v1.tools import create_baseball_tools
 
 
 @override_settings(BASEBALL_QUERY_MAX_ROWS=200, BASEBALL_QUERY_MAX_SQL_BYTES=32768)

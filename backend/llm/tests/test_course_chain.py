@@ -1,7 +1,7 @@
 """출발지 기준 이어 짜기(geo.chain_course) 단위 테스트 — DB·LLM 없이 좌표 계산만 본다."""
 from django.test import SimpleTestCase
 
-from .rag.course import geo
+from ..v1.rag.course import geo
 
 # 위도 0.009 ≈ 1km
 ANCHOR = {"key": "STADIUM", "lat": 37.500, "lng": 127.000}
@@ -103,7 +103,7 @@ class OriginStepSearchTests(SimpleTestCase):
     def test_each_step_searches_around_the_previous_point(self):
         from unittest.mock import patch
 
-        from .rag.course import agent
+        from ..v1.rag.course import agent
 
         centers = []
 
@@ -144,7 +144,7 @@ class OriginStepSearchTests(SimpleTestCase):
     def test_no_search_results_means_no_origin_course(self):
         from unittest.mock import patch
 
-        from .rag.course import agent
+        from ..v1.rag.course import agent
 
         sl = {"spare": "tight", "prefs": [], "ban": [], "boost": [], "exclude": set()}
         with patch.object(agent, "invoke_domain_tool", return_value={"places": []}):
@@ -156,7 +156,7 @@ class OriginExtraStepTests(SimpleTestCase):
         return {"spare": "normal", "prefs": [], "ban": [], "boost": [], "exclude": set(), **extra}
 
     def test_walk_request_adds_a_walk_step_before_the_game(self):
-        from .rag.course import agent
+        from ..v1.rag.course import agent
 
         self.assertEqual(agent.plan_steps(self.sl(extras=["walk"]), evening=False), (["FOOD", "CAFE", "WALK"], ["CAFE"]))
         self.assertEqual(agent.plan_steps(self.sl(extras=["walk"], scope="after"), evening=True), ([], ["BAR", "WALK"]))
@@ -166,7 +166,7 @@ class OriginExtraStepTests(SimpleTestCase):
     def test_origin_course_searches_parks_for_the_walk_step(self):
         from unittest.mock import patch
 
-        from .rag.course import agent
+        from ..v1.rag.course import agent
 
         calls = []
 
@@ -196,7 +196,7 @@ class OriginExtraStepTests(SimpleTestCase):
 
 class ContextPrefixTests(SimpleTestCase):
     def test_stadium_and_origin_prefixes_are_split_in_any_order(self):
-        from .rag.pipeline import split_context_prefix, split_stadium_prefix
+        from ..v1.rag.pipeline import split_context_prefix, split_stadium_prefix
 
         self.assertEqual(
             split_context_prefix("[선택한 구장: 잠실야구장]\n[출발지: 37.51234,127.07123]\n코스 짜줘"),
@@ -210,7 +210,7 @@ class ContextPrefixTests(SimpleTestCase):
         self.assertEqual(split_stadium_prefix("[선택한 구장: 잠실야구장]\n[출발지: 37.5,127.0]\n질문"), ("질문", "잠실야구장"))
 
     def test_origin_outside_korea_is_ignored(self):
-        from .rag.course.agent import valid_origin
+        from ..v1.rag.course.agent import valid_origin
 
         self.assertEqual(valid_origin({"lat": "37.5", "lng": 127}), {"lat": 37.5, "lng": 127.0})
         self.assertIsNone(valid_origin({"lat": 0, "lng": 0}))

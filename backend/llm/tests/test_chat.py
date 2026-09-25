@@ -12,9 +12,9 @@ from openai import OpenAIError
 from rest_framework.test import APIClient, APITestCase
 from drf_spectacular.generators import SchemaGenerator
 
-from .chat_service import ChatService
-from .models import ChatMessage, ChatSession, ChatTurn, Document, DocumentChunk
-from .tools import create_baseball_tools
+from ..v1.chat_service import ChatService
+from ..models import ChatMessage, ChatSession, ChatTurn, Document, DocumentChunk
+from ..v1.tools import create_baseball_tools
 
 
 class ChatToolCallingTest(APITestCase):
@@ -171,7 +171,7 @@ class ChatApiTest(APITestCase):
             return AIMessage(content="테스트 답변")
 
         # 모델만 대체하고 View, ChatService, 히스토리 저장은 실제 실행합니다.
-        patcher = patch("llm.chat_service.ChatOpenAI", return_value=RunnableLambda(respond))
+        patcher = patch("llm.v1.chat_service.ChatOpenAI", return_value=RunnableLambda(respond))
         self.model = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -273,7 +273,7 @@ class ChatApiTest(APITestCase):
 
     def test_storage_failure_is_not_reported_as_success(self):
         session = ChatSession.objects.create(user=self.user)
-        with patch("llm.chat_message_histories.ChatMessage.objects.bulk_create", side_effect=DatabaseError):
+        with patch("llm.v1.chat_message_histories.ChatMessage.objects.bulk_create", side_effect=DatabaseError):
             with self.assertRaises(DatabaseError):
                 self.client.post(
                     f"/api/v1/chat/sessions/{session.pk}/messages/", {"content": "hello"}, format="json"
@@ -341,7 +341,7 @@ class ChatApiTest(APITestCase):
             "route": "course:DOOSAN",
         }
         session = ChatSession.objects.create(user=self.user)
-        with patch("llm.views.last_detail", return_value=metadata):
+        with patch("llm.v1.views.last_detail", return_value=metadata):
             done = self.stream(session, chunks=("답",))[-1][1]
             non_stream = self.client.post(
                 f"/api/v1/chat/sessions/{session.pk}/messages/", {"content": "다른 질문"}, format="json"

@@ -49,7 +49,7 @@ class Command(BaseCommand):
 
         p("\n[2] 스위치")
         try:
-            from llm.rag.pipeline import chat_chain, use_rag
+            from llm.v1.rag.pipeline import chat_chain, use_rag
         except Exception as e:
             p(ng(f"    pipeline import 실패: {e!r}"))
             return
@@ -110,7 +110,7 @@ class Command(BaseCommand):
         q = "잠실에서 친구들이랑 첫 직관인데 경기 전후 코스 짜줘. 치킨 좋아해" if o["course"] else o["question"]
         p(f"    질문: {q}")
         try:
-            from llm.rag.pipeline import answer
+            from llm.v1.rag.pipeline import answer
             t0 = time.perf_counter()
             r = answer(q, stadium_name=o["stadium"])
             ms = (time.perf_counter() - t0) * 1000

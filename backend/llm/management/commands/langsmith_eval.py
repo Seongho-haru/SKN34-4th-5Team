@@ -126,7 +126,7 @@ class Command(BaseCommand):
             self.stdout.write(f"업로드 완료: {len(rows)}문항 → 데이터셋 '{o['dataset']}'")
 
         if o["run"]:
-            from llm.rag.pipeline import answer
+            from llm.v1.rag.pipeline import answer
 
             def target(inputs):
                 r = answer(inputs["question"], history=inputs.get("history"), stadium_name=inputs.get("stadium_name"),

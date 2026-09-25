@@ -5,16 +5,16 @@ from django.test import SimpleTestCase
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.runnables import RunnableLambda
 
-from .chat_service import ChatService
-from .rag import dispatcher
-from .rag import domain_tools
-from .rag.assistant import pipeline as assistant_pipeline
-from .rag.club import agent as club
-from .rag.course import agent as course
-from .rag.nearby import agent as nearby
-from .rag.assistant import tools as assistant_tools
-from .rag.venue import agent as venue
-from .tools import DOMAIN_TOOL_NAMES
+from ..v1.chat_service import ChatService
+from ..v1.rag import dispatcher
+from ..v1.rag import domain_tools
+from ..v1.rag.assistant import pipeline as assistant_pipeline
+from ..v1.rag.club import agent as club
+from ..v1.rag.course import agent as course
+from ..v1.rag.nearby import agent as nearby
+from ..v1.rag.assistant import tools as assistant_tools
+from ..v1.rag.venue import agent as venue
+from ..v1.tools import DOMAIN_TOOL_NAMES
 
 
 EXPECTED = set(DOMAIN_TOOL_NAMES) | {

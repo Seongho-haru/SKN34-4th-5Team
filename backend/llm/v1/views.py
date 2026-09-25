@@ -25,7 +25,7 @@ from community.pagination import PublicPageNumberPagination
 
 from .chat_message_histories import DjangoChatMessageHistory
 from .chat_service import ChatService, StaleChatHistoryError
-from .models import ChatMessage, ChatProgressEvent, ChatSession, ChatTurn
+from ..models import ChatMessage, ChatProgressEvent, ChatSession, ChatTurn
 from .progress import ProgressCollector, collect, project_event
 from .rag.pipeline import last_detail
 from .serializers import (
