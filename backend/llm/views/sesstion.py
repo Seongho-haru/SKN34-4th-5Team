@@ -1,10 +1,11 @@
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.generics import GenericAPIView
 from rest_framework import mixins
 from llm.models import ChatSession
+from llm.serializer.sesstion import ChatSessionSerializer
+import uuid
 
 class ChatRoomListView(
     mixins.ListModelMixin,      # GET       요청 : 채팅방 리스트전달
@@ -17,7 +18,7 @@ class ChatRoomListView(
                 return list_대화방
     """
     permission_classes = [IsAuthenticated]
-    serializer_class = ChatSession
+    serializer_class = ChatSessionSerializer
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
@@ -46,10 +47,20 @@ class ChatRoomCreateView(
     """
     # AllowAny : 비회원 + 회원 사용가능 권한 설정 
     permission_classes = [AllowAny]
+    serializer_class = ChatSessionSerializer
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
+        # 회원시
+        if self.request.user.is_authenticated:
+            serializer.save(
+                user=self.request.user,
+                guest=None
+            )
+        # 비회원시
+        serializer.save(
+                user=None,
+                guest=self.guest_id
+            )
 
     # POST /api/v2/chat/sessions/
     def post(self, request : Request, *args, **kwargs):
@@ -58,13 +69,22 @@ class ChatRoomCreateView(
             return self.create(request, *args, **kwargs)
         # 2. 만약 비회왼이라면
         # 3. 쿠키에서 Guest_id 를 찾는다.
-        guest_id = request.COOKIES.get("guest_id")
+        self.guest_id = request.COOKIES.get("guest_id")
         # 4. 쿠기에 guest_id가없으면 생성한다.
-        if not guest_id:
-            guest_id = str(uuid.uuid4())
-        
+        if not self.guest_id:
+            self.guest_id = str(uuid.uuid4())
+        # 5. 비회원 전용 채팅방 생성
+        response = self.create(request, *args, **kwargs)
 
-        
+        # 브라우저가 다음 요청에도 동일 guest를 식별하도록 저장
+        response.set_cookie(
+            "guest_id",
+            str(self.guest_id),
+            httponly=True,
+            samesite="Lax",
+        )
+
+        return response
     
 class ChatRoomDetailView(
     mixins.UpdateModelMixin,    # PATCH     요청 : 채팅방 수정(예: 체팅 제목)
@@ -79,7 +99,7 @@ class ChatRoomDetailView(
     """
 
     permission_classes = [IsAuthenticated]
-    serializer_class = ChatSession
+    serializer_class = ChatSessionSerializer
 
     def get_queryset(self):
         return ChatSession.objects.filter(
@@ -96,20 +116,3 @@ class ChatRoomDetailView(
         return self.destroy(request, *args, **kwargs)
 
 
-class ChatMessageView(APIView):
-    """대화방 메시지 조회 및 AI 답변 생성 API.
-
-    URL: /api/v2/chat/sessions/<session_id>/messages/
-
-    GET: 해당 대화방의 저장된 메시지를 조회합니다.
-    POST: 사용자 메시지를 보내고 AI 답변을 생성합니다.
-         Accept: application/json이면 JSON, text/event-stream이면 SSE로 응답합니다.
-    """
-
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        pass
-
-    def post(self, request, *args, **kwargs):
-        pass
