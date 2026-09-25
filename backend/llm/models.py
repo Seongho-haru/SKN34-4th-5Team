@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from pgvector.django import VectorField, HnswIndex
-
+from llm.enum import ToolStatus , ChatRole , MessageStatus
 
 class Document(models.Model):
     title = models.CharField(max_length=255)
@@ -78,77 +78,76 @@ class ChatMessage(models.Model):
         on_delete=models.CASCADE,
         related_name="messages",
     )
-    sequence_no = models.IntegerField()
+    sequence_no = models.PositiveIntegerField()
     role = models.CharField(
-        max_length=10, choices=[("human", "사용자"), ("ai", "AI")], default="human"
+        max_length=10,
+        choices=ChatRole.choices,
     )
     message = models.TextField()
     status = models.CharField(
-        max_length=10,
-        choices=[("completed", "완료"), ("stopped", "중단")],
-        blank=True,
-        default="",
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-
-class ChatTurn(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    session = models.ForeignKey(ChatSession, on_delete=models.CASCADE, related_name="turns")
-    question = models.TextField()
-    base_sequence = models.PositiveIntegerField(default=0)
-    status = models.CharField(
-        max_length=10,
-        choices=[
-            ("pending", "대기"),
-            ("completed", "완료"),
-            ("stopped", "중단"),
-            ("failed", "실패"),
-        ],
-        default="pending",
-    )
-    human_message = models.OneToOneField(
-        ChatMessage, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
-    )
-    assistant_message = models.OneToOneField(
-        ChatMessage, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-
-class ChatProgressEvent(models.Model):
-    turn = models.ForeignKey(ChatTurn, on_delete=models.CASCADE, related_name="progress_events")
-    sequence_no = models.PositiveIntegerField()
-    operation_id = models.UUIDField()
-    parent_operation_id = models.UUIDField(null=True, blank=True)
-    kind = models.CharField(
-        max_length=10,
-        choices=[("phase", "처리"), ("retrieval", "검색"), ("tool", "도구")],
-    )
-    status = models.CharField(
         max_length=12,
-        choices=[
-            ("started", "시작"),
-            ("completed", "완료"),
-            ("failed", "실패"),
-            ("interrupted", "중단"),
-            ("unknown", "확인 불가"),
-        ],
+        choices=MessageStatus.choices,
+        default=MessageStatus.COMPLETED,
     )
-    label = models.CharField(max_length=160)
-    tool_name = models.CharField(max_length=80, null=True, blank=True)
-    tool_call_id = models.CharField(max_length=255, null=True, blank=True)
-    arguments = models.JSONField(null=True, blank=True)
-    result = models.JSONField(null=True, blank=True)
-    truncated = models.BooleanField(default=False)
+    is_active = models.BooleanField(
+        default=True,
+        db_index=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ("sequence_no",)
         constraints = [
             models.UniqueConstraint(
-                fields=("turn", "sequence_no"), name="unique_chat_progress_sequence"
+                fields=["session", "sequence_no"],
+                condition=Q(is_active=True),
+                name="unique_active_message_sequence",
             )
         ]
+
+        indexes = [
+            models.Index(
+                fields=["session", "is_active", "sequence_no"],
+            )
+        ]
+
+
+class ChatToolCall(models.Model):
+    message = models.ForeignKey(
+        ChatMessage,
+        on_delete=models.CASCADE,
+        related_name="tools",
+    )
+
+    tool_name = models.CharField(max_length=100)
+
+    status = models.CharField(
+        max_length=12,
+        choices=ToolStatus.choices,
+        default=ToolStatus.STARTED,
+    )
+
+    arguments = models.JSONField(
+        null=True,
+        blank=True,
+    )
+
+    result = models.JSONField(
+        null=True,
+        blank=True,
+    )
+
+    truncated = models.BooleanField(
+        default=False,
+    )
+
+    # Tool 호출 시작 시간
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    # Tool 실행 종료 시간
+    finished_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )

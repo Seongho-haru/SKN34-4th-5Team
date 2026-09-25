@@ -12,7 +12,7 @@ from openai import OpenAIError
 from rest_framework.test import APIClient, APITestCase
 from drf_spectacular.generators import SchemaGenerator
 
-from ..v1.chat_service import ChatService
+from ..service.chat_service import ChatService
 from ..models import ChatMessage, ChatSession, ChatTurn, Document, DocumentChunk
 from ..v1.tools import create_baseball_tools
 

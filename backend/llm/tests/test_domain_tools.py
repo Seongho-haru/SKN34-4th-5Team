@@ -17,7 +17,7 @@ from baseball import models as baseball
 from community.models import CommunityDraft, CommunityPost, GamePrediction, PredictionGame
 from travel.models import Course, CourseStop
 
-from ..v1.chat_service import ChatService
+from ..service.chat_service import ChatService
 from ..v1.rag import domain_tools
 from ..v1.tools import DOMAIN_TOOL_NAMES, create_default_tools, create_domain_tools
 

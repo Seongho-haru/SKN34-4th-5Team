@@ -11,9 +11,9 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 
-from .chat_message_histories import DjangoChatMessageHistory
+from ..v1.chat_message_histories import DjangoChatMessageHistory
 from ..models import ChatSession, ChatTurn
-from .progress import ProgressCollector, collect, config_kwargs, current
+from ..v1.progress import ProgressCollector, collect, config_kwargs, current
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 
@@ -29,7 +29,7 @@ class ChatService:
     def __init__(self, llm=None, tools=None):
         self.llm = llm or ChatOpenAI(model="gpt-5.6-luna", temperature=0, timeout=30, max_retries=0, reasoning_effort="medium", use_responses_api=True)
         if tools is None:
-            from .rag.domain_tools import tools_for
+            from ..v1.rag.domain_tools import tools_for
             tools = tools_for("chat")
         self.tools = tuple(tools)
         self.tool_map = {tool.name: tool for tool in self.tools}
@@ -45,6 +45,10 @@ class ChatService:
             user_id=user_id,
             session_id=conversation_id,
         )
+
+    @staticmethod
+    def get_chain(self):
+        return self.chain
 
     def get_prompt(self):
         return ChatPromptTemplate.from_messages(
@@ -69,7 +73,7 @@ class ChatService:
     def _content(message):
         content = message if isinstance(message, str) else message.content
         if isinstance(content, list):
-            from .rag.domain_tools import visible_text
+            from ..v1.rag.domain_tools import visible_text
             content = visible_text(content)
         if not isinstance(content, str):
             raise ValueError("Malformed LLM response")
@@ -99,7 +103,7 @@ class ChatService:
     def _run_scoped(self, values):
         # 항상 KBO 직관 RAG 파이프라인이 답한다 (RAG + 야구 DB 도구). 테스트 중에만 None → 아래 도구 루프 그대로.
         # 지연 import: RAG 모듈이 깨져도 서버 기동은 되게.
-        from .rag.pipeline import chat_chain
+        from ..v1.rag.pipeline import chat_chain
 
         if rag := chat_chain():
             return rag.invoke(values)
@@ -123,8 +127,8 @@ class ChatService:
         return limit_answer
 
     def _run(self, values):
-        from .rag.assistant.tools import request_state
-        from .rag.pipeline import normalize_history
+        from ..v1.rag.assistant.tools import request_state
+        from ..v1.rag.pipeline import normalize_history
         with request_state(None, values.get("question", ""), normalize_history(values.get("chat_history"))):
             return self._run_scoped(values)
 
@@ -213,8 +217,8 @@ class ChatService:
 
     def stream_with_history(self, messages, question: str):
         """주어진 제한된 기록으로 모델 청크를 내보냅니다."""
-        from .rag.assistant.tools import request_state
-        from .rag.pipeline import chat_chain, normalize_history
+        from ..v1.rag.assistant.tools import request_state
+        from ..v1.rag.pipeline import chat_chain, normalize_history
 
         with request_state(None, question, normalize_history(messages)):
             if rag := chat_chain():

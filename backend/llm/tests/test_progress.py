@@ -15,7 +15,7 @@ from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import StructuredTool
 from rest_framework.test import APIClient
 
-from ..v1.chat_service import ChatService
+from ..service.chat_service import ChatService
 from ..models import ChatMessage, ChatProgressEvent, ChatSession, ChatTurn
 from ..v1.progress import (
     MAX_ARGUMENT_BYTES,

@@ -5,7 +5,7 @@ from django.test import SimpleTestCase
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.runnables import RunnableLambda
 
-from ..v1.chat_service import ChatService
+from ..service.chat_service import ChatService
 from ..v1.rag import dispatcher
 from ..v1.rag import domain_tools
 from ..v1.rag.assistant import pipeline as assistant_pipeline

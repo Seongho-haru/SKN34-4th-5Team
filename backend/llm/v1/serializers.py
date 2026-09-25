@@ -3,7 +3,7 @@ from datetime import timedelta
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from .chat_service import ChatService
+from ..service.chat_service import ChatService
 from django.utils import timezone
 
 from ..models import ChatMessage, ChatProgressEvent, ChatSession, ChatTurn
