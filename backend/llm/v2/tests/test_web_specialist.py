@@ -38,7 +38,7 @@ class WebOwnershipTests(SimpleTestCase):
             self.assertNotIn("research_public_web", calls[0]["tools"])
             result = next(m for m in out["messages"] if isinstance(m, ToolMessage))
             self.assertEqual(set(calls[0]["tools"]),
-                             set(chain.sub_agents.SPECIALISTS) | ({"get_games"} if "schedule" in capabilities else set()))
+                             set(chain.sub_agents.SPECIALISTS) | {"present_planning_questions"} | ({"get_games"} if "schedule" in capabilities else set()))
             self.assertEqual(result.status, "success")
             self.assertIn("https://example.com/menu", result.content)
             self.assertEqual(calls[1]["tools"], ())

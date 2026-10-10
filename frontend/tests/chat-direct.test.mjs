@@ -667,18 +667,19 @@ test("usage DTO is fetched from the owner endpoint and quota errors keep a stabl
 
 test("planning payload is validated on SSE and history; invalid UI keeps text fallback", async () => {
   const payload = { offer_writer: true, questions: [{ question: "동행", choices: ["혼자", "친구"] }, { question: "이동", choices: ["도보", "차", "버스", "미정"] }] };
-  for (const planning of [payload, { offer_writer: true, questions: [{ question: "bad", choices: ["one"] }] }, { offer_writer: true, questions: [{ question: "bad", choices: ["a", "b", "c", "d", "e"] }] }, { offer_writer: "yes", questions: [] }]) {
+  const valid = [{ offer_writer: false, questions: [{ question: "구장", choices: Array.from({ length: 10 }, (_, i) => `구장 ${i}`) }] }, payload, { offer_writer: false, questions: [{ question: "어느 날짜인가요?", choices: [] }] }, { offer_writer: false, questions: [{ question: "어느 팀인가요?", choices: ["두산", "LG"] }] }];
+  for (const planning of [...valid, { offer_writer: false, questions: [] }, { offer_writer: true, questions: [{ question: "bad", choices: ["one"] }] }, { offer_writer: true, questions: [{ question: "bad", choices: Array.from({ length: 11 }, (_, i) => `${i}`) }] }, { offer_writer: "yes", questions: [] }]) {
     const seen = [];
     const feedback = { rating: "up", reason: "", comment: "" };
     global.fetch = async (url, init) => init.method === "GET" ? json([{ ...row(2, "assistant", "텍스트"), planning, feedback }, { ...row(3, "user", "삭제된 답변의 질문"), answer_deleted: true }]) : sse([["planning", planning], ["done", { message_id: "2", assistant_message: "텍스트", tools: [], planning }]]);
     const reply = await sendChatMessage("guest", { sessionId: SESSION, content: "계획" }, undefined, { onPlanning: value => seen.push(value) });
     const history = restoreChatMessages(await fetchChatHistory("guest", SESSION));
     assert.equal(reply.reply, "텍스트");
-    assert.deepEqual(reply.planning, planning === payload ? payload : undefined);
+    assert.deepEqual(reply.planning, valid.includes(planning) ? planning : undefined);
     assert.deepEqual(history[0].planning, reply.planning);
     assert.deepEqual(history[0].feedback, feedback);
     assert.equal(history[1].answerDeleted, true);
-    assert.equal(seen.length, planning === payload ? 1 : 0);
+    assert.equal(seen.length, valid.includes(planning) ? 1 : 0);
   }
 });
 

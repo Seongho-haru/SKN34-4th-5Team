@@ -141,8 +141,11 @@ test("structured answer formatting preserves semantic values and ordinary colon 
   assert.deepEqual(planningAnswers("상세?: 18:30 도착\n경기 후 식사\n이동?: 버스: 2번", multiline), ["18:30 도착\n경기 후 식사", "버스: 2번"]);
 }));
 
-test("vertical full-width choices precede one initially empty accessible input", () => harness(2, h => {
+test("responsive ten-button choices precede one initially empty accessible input", () => harness(2, h => {
+  h.props.message.planning.questions[0].choices = Array.from({ length: 10 }, (_, i) => `구장 ${i}`); h.render();
   const fieldset = nodes(h.tree).find(n => n.type === "fieldset");
+  assert.equal(nodes(fieldset).filter(n => n.type === "button").length, 10);
+  assert.ok(nodes(fieldset).filter(n => n.type === "button").every(n => n.props.type === "button" && typeof n.props["aria-pressed"] === "boolean"));
   assert.ok(nodes(fieldset).some(n => n.props?.className === "chat-question-choices"));
   const input = nodes(fieldset).find(n => n.type === "input");
   assert.equal(input.props.value, "");
@@ -150,7 +153,10 @@ test("vertical full-width choices precede one initially empty accessible input",
   assert.equal(nodes(h.tree).filter(n => n.type === "input").length, 1);
   assert.equal(h.button("직접 입력하기"), undefined);
   const css = readFileSync(join(frontend, "styles/chat-planning.css"), "utf8");
-  assert.match(css, /\.chat-question-choices\s*\{[^}]*flex-direction:\s*column/);
+  assert.match(css, /container-type:\s*inline-size/);
+  for (const columns of [2, 3, 5]) assert.ok(css.includes(`repeat(${columns}, minmax(0, 1fr))`));
+  assert.match(css, /@container \(min-width: 680px\)/);
+  assert.match(css, /:focus-visible/);
   assert.match(css, /\.chat-question-choices button\s*\{[^}]*width:\s*100%[^}]*text-align:\s*left/);
   assert.match(css, /\.chat-planning button\s*\{[^}]*min-height:\s*44px/);
 }));
@@ -184,6 +190,18 @@ test("LLM direct-input wording remains an ordinary immediate-send choice", () =>
   h.props.message.planning.questions[0].choices.push("다른 구장 직접 입력"); h.render();
   h.click(h.button("다른 구장 직접 입력"));
   assert.deepEqual(h.sends, [[2, "질문 1: 다른 구장 직접 입력"]]);
+}));
+
+test("free-text question has no fabricated choices and sends without writer offer", () => harness(1, h => {
+  h.props.message.planning = { offer_writer: false, questions: [{ question: "어느 날짜인가요?", choices: [] }] }; h.render();
+  const { parsePlanning } = h.require("./helper.cjs");
+  assert.deepEqual(parsePlanning(h.props.message.planning), h.props.message.planning);
+  assert.equal(nodes(h.tree).filter(n => n.type === "button").length, 1);
+  assert.equal(h.button("답변 보내기").props.disabled, true);
+  assert.equal(nodes(h.tree).some(n => n.props?.children === "선택하면 바로 보내요"), false);
+  nodes(h.tree).find(n => n.type === "input").props.onChange({ target: { value: "  10월 11일  " } }); h.render();
+  h.click(h.button("답변 보내기"));
+  assert.deepEqual(h.sends, [[2, "어느 날짜인가요?: 10월 11일"]]);
 }));
 
 test("single choice auto-sends once even with a stale double click", () => harness(1, h => {

@@ -65,7 +65,7 @@ class AttachmentDelegationTests(TransactionTestCase):
         current = next(m for m in self.calls[0]["messages"] if m.id == "q")
         for token in ("BEGIN", "MIDDLE 14:00 ~ 15:00", "END", "Article frame", '"original_body": true'):
             self.assertIn(token, current.text)
-        self.assertEqual(set(self.calls[0]["tools"]), set(chain.sub_agents.SPECIALISTS))
+        self.assertEqual(set(self.calls[0]["tools"]), set(chain.sub_agents.SPECIALISTS) | {"present_planning_questions"})
         self.assertNotIn("BEGIN", json.dumps([m.model_dump() for m in out["messages"]], default=str))
 
     def test_cache_followup_and_reattach_keep_main_tool_without_browser_fetch(self):

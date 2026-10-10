@@ -34,16 +34,18 @@ class ScriptedModel(BaseChatModel):
     calls: Any
     bound: tuple = ()
     choice: Any = None
+    schemas: Any = ()
 
     @property
     def _llm_type(self):
         return "scripted"
 
     def bind_tools(self, tools, **kwargs):
-        return self.model_copy(update={"bound": tuple(t.get("type") if isinstance(t, dict) else t.name for t in tools), "choice": kwargs.get("tool_choice")})
+        from langchain_core.utils.function_calling import convert_to_openai_tool
+        return self.model_copy(update={"bound": tuple(t.get("type") if isinstance(t, dict) else t.name for t in tools), "choice": kwargs.get("tool_choice"), "schemas": tuple(convert_to_openai_tool(t) for t in tools)})
 
     def _generate(self, messages, stop=None, run_manager=None, **kwargs):
-        self.calls.append({"tools": self.bound, "system": messages[0].content, "messages": messages, "tool_choice": self.choice})
+        self.calls.append({"tools": self.bound, "system": messages[0].content, "messages": messages, "tool_choice": self.choice, "schemas": self.schemas})
         while self.script:
             head = self.script[0]
             if not callable(head):
@@ -136,7 +138,7 @@ class ChainTest(unittest.TestCase):
         self.assertEqual(out["messages"][-1].content, "잠실 주차 안내예요.")
         self.assertEqual(self.executed, ["get_stadium", "get_transport"])  # get_games 는 실행 차단
         self.assertEqual(set(self.model_calls[0]["tools"]),
-                         {"get_stadium", "get_transport", "search_kbo_documents"} | set(sub_agents.SPECIALISTS))
+                         {"get_stadium", "get_transport", "search_kbo_documents"} | set(sub_agents.SPECIALISTS) | {"present_planning_questions"})
         # JEV 는 이번 질문과 이전 대화를 분리해 받는다
         q, hist, ctx = self.jev.call_args.args
         self.assertEqual((q, [m.content for m in hist], ctx), ("주차는?", ["잠실 가요", "네"], None))
@@ -202,8 +204,86 @@ class ChainTest(unittest.TestCase):
 
     def test_greeting_exposes_delegations_without_requiring_invocation(self):
         self.run_graph([AIMessage("안녕하세요!")], decision(), [HumanMessage("안녕")])
-        self.assertEqual(set(self.model_calls[0]["tools"]), set(sub_agents.SPECIALISTS))
+        self.assertEqual(set(self.model_calls[0]["tools"]), set(sub_agents.SPECIALISTS) | {"present_planning_questions"})
         self.assertEqual(self.executed, [])
+
+    def test_empty_capabilities_execute_planning_ui(self):
+        payload = {"offer_writer": True, "questions": [{"question": "어느 구장인가요?", "choices": ["잠실", "사직"]}]}
+        out = self.run_graph([call("present_planning_questions", payload, "ui"), AIMessage("구장을 선택해 주세요.")],
+                             decision(), [HumanMessage("직관 조건을 선택하고 싶어")])
+        self.assertEqual(set(self.model_calls[0]["tools"]), set(sub_agents.SPECIALISTS) | {"present_planning_questions"})
+        result = next(m for m in out["messages"] if m.type == "tool")
+        self.assertEqual((result.name, result.status, result.artifact), ("present_planning_questions", "success", payload))
+        self.assertEqual(self.executed, [])
+        self.jev.assert_called_once()
+
+    def test_general_clarification_executes_without_writer(self):
+        for questions in [[{"question": "어느 날짜인가요?", "choices": []}],
+                          [{"question": "어느 팀인가요?", "choices": ["두산", "LG"]}]]:
+            payload = {"offer_writer": False, "questions": questions}
+            out = self.run_graph([call("present_planning_questions", payload, "ui"), AIMessage("답변을 기다릴게요.")],
+                                 decision(True, ["schedule"]), [HumanMessage("경기 일정 알려줘")])
+            result = next(m for m in out["messages"] if m.type == "tool")
+            self.assertEqual((result.status, result.artifact), ("success", payload))
+            self.assertIn("코스가 아닌 질문은 항상 offer_writer=False", chain.MAIN_RULES)
+            self.assertIn("반드시 present_planning_questions", chain.MAIN_RULES)
+            self.assertIn("choices=[]", chain.MAIN_RULES)
+
+    def test_candidate_question_policy_reaches_actual_model_prompt_and_schema(self):
+        for question, verdict in (
+            ("경기일정 조회 해줘", {"allowed": True, "capabilities": ["web_research", "schedule"], "course_request": "NONE"}),
+            ("음 그냥 가고싶은데 주변에서 뭘해야해?", {"allowed": True, "capabilities": [], "course_request": "NONE"}),
+        ):
+            with self.subTest(question=question):
+                self.run_graph([AIMessage("확인")], verdict, [HumanMessage(question)])
+                first = self.model_calls[0]
+                for text in ("질문 없이 바로", "이미 확인한 후보", "추가 조회하지 않는다", "고정 노출된 해당 전문 도구", "좁은 후보 조회", "팀·구장은 ask_baseball", "메인이 질문", "2~10개", "일부 후보", "진정한 개방형", "조회 실패·후보 미확인", "선택지를 만들지 않는다", "오늘 포함 7일", "팀·날짜 선택을 필수로 묻지", "바로 ask_course", "offer_writer=False"):
+                    self.assertIn(text, first["system"])
+                schema = next(s["function"] for s in first["schemas"] if s["function"]["name"] == "present_planning_questions")
+                for text in ("answer directly", "reuse prior", "without repeated lookup", "verified candidates", "fixed specialist", "narrow lookup", "main asks", "never invent", "2-10", "free input", "at most 10", "partial list", "open-ended", "disclosed unavailable", "whole schedule", "ask_course first", "offer_writer=False"):
+                    self.assertIn(text, schema["description"])
+                self.assertEqual(schema["parameters"]["properties"]["questions"]["items"]["properties"]["choices"]["maxItems"], 10)
+                self.assertIn("ask_baseball", first["tools"])
+        # Scripted responses verify transport, not live model selection quality.
+
+    def test_grounded_candidates_delegate_before_main_question(self):
+        candidates = [f"확인 구장 {i}" for i in range(10)]
+        payload = {"offer_writer": False, "questions": [{"question": "어느 구장인가요?", "choices": candidates}]}
+        task = "저장된 실제 구장 후보만 조회해 반환; 사용자에게 질문하지 않기"
+        out = self.run_graph([
+            call("ask_baseball", {"task": task}, "lookup"),
+            call("get_stadiums", {}, "stadiums"), AIMessage(" / ".join(candidates)),
+            call("present_planning_questions", payload, "ui"), AIMessage("구장을 선택해 주세요."),
+        ], decision(True), [HumanMessage("구장 주변을 찾아줘")])
+        specialist = self.model_calls[1]
+        self.assertEqual(specialist["messages"][1].content, task)
+        for text in ("한 목표", "중첩 위임하지 않는다", "사용자에게 직접 질문", "저장된 행"):
+            self.assertIn(text, specialist["system"])
+        self.assertFalse(set(sub_agents.SPECIALISTS) & set(specialist["tools"]))
+        results = [m for m in out["messages"] if m.type == "tool"]
+        self.assertEqual([m.name for m in results], ["ask_baseball", "present_planning_questions"])
+        self.assertEqual(results[-1].artifact, payload)
+        for text in ("단일/일괄", "짧은 순차", "같은 응답에서 병렬", "의존 순서", "오늘 포함 7일", "availability=unknown"):
+            self.assertIn(text, self.model_calls[0]["system"])
+        # Scripted model proves grounding/delegation transport, not live selection quality.
+
+    def test_planning_ui_denied_without_literal_pass(self):
+        from types import SimpleNamespace as NS
+        middleware = DynamicToolMiddleware(["present_planning_questions"], CAPABILITY_TOOLS,
+                                           (*sub_agents.SPECIALISTS, "present_planning_questions"))
+        for verdict in (None, {}, decision(False), {"allowed": "true"}, {"allowed": 1}):
+            with self.subTest(verdict=verdict):
+                state = {"decision": verdict, "tool_group_ids": ["day_plan"]}
+                self.assertEqual(middleware.allowed(state), frozenset())
+                result = middleware.wrap_tool_call(
+                    NS(state=state, tool_call={"name": "present_planning_questions", "id": "ui", "args": {}}),
+                    lambda _: self.fail("denied planning UI executed"))
+                self.assertEqual(result.status, "error")
+        out = self.run_graph([call("present_planning_questions", {"offer_writer": True, "questions": []}, "ui")],
+                             decision(False), [HumanMessage("SQL 짜줘")])
+        self.assertEqual(out["messages"][-1].content, SCOPE_MESSAGE)
+        self.assertEqual(self.model_calls, [])
+        self.assertFalse(any(m.type == "tool" for m in out["messages"]))
 
     def test_complex_delegates_to_real_specialists_and_redelegates(self):
         script = [
@@ -351,8 +431,8 @@ class ChainTest(unittest.TestCase):
         with patch.object(classifier, "classify", return_value=decision(capabilities=["weather"])):
             graph.invoke({"messages": [HumanMessage("날씨")]})
         self.assertEqual([set(c["tools"]) for c in calls],
-                         [{"get_standings"} | set(sub_agents.SPECIALISTS),
-                          {"get_games", "get_stadium", "get_weather"} | set(sub_agents.SPECIALISTS)])
+                         [{"get_standings"} | set(sub_agents.SPECIALISTS) | {"present_planning_questions"},
+                          {"get_games", "get_stadium", "get_weather"} | set(sub_agents.SPECIALISTS) | {"present_planning_questions"}])
 
 
     def test_graph_is_main_agent_only_without_checkpointer(self):
@@ -377,7 +457,7 @@ class ChainTest(unittest.TestCase):
                     script.append(AIMessage("전문 결과"))
                 script.append(AIMessage("최종 안내"))
                 out = self.run_graph(script, decision(), [HumanMessage("잠실 확인")])
-                self.assertEqual(set(self.model_calls[0]["tools"]), expected)
+                self.assertEqual(set(self.model_calls[0]["tools"]), expected | {"present_planning_questions"})
                 results = [m for m in out["messages"] if m.type == "tool"]
                 self.assertEqual(results[0].status, "error")
                 self.assertEqual((results[1].name, results[1].status), (name, "success"))
@@ -476,7 +556,7 @@ class ChainTest(unittest.TestCase):
                 outs = list(pool.map(lambda q: graph.invoke({"messages": [HumanMessage(q)]}), caps))
         self.assertEqual([o["messages"][-1].content for o in outs], [f"답:{q}" for q in caps])
         seen = {c["messages"][-1].content: set(c["tools"]) for c in calls}
-        fixed = set(sub_agents.SPECIALISTS)
+        fixed = set(sub_agents.SPECIALISTS) | {"present_planning_questions"}
         self.assertEqual(seen["순위"], {"get_standings"} | fixed)
         self.assertEqual(seen["날씨"], {"get_games", "get_stadium", "get_weather"} | fixed)
         self.assertEqual(seen["주차"], {"get_stadium", "get_transport", "search_kbo_documents"} | fixed)

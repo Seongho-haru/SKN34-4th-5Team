@@ -85,6 +85,8 @@ def build_agent(model, tools, rules, capability_tools=None, budget=MODEL_CALL_BU
     get_directions 는 요청당 2회까지만 실행하고(외부 429 반복 방지), 넘으면 오류 ToolMessage 로 모델이 다음으로 간다."""
     from langchain.agents import create_agent
     from ..middleware.attachment_context import AttachmentContextMiddleware
+    if not run_jev:
+        rules += "\n한 목표만 처리하며 내부 순차 조회는 허용하되 다른 전문 에이전트에 중첩 위임하지 않는다. 사용자에게 직접 질문하거나 사용자 UI를 만들지 않는다. 필수 정보가 부족하면 미확인 조건과 필요한 질문/실제 선택 후보를 메인 에이전트에게 반환한다. 최신성 확인 실패에도 저장된 행이 있으면 경고와 함께 반환하고, 실패+빈 결과는 미확인이지 경기 없음이 아니다."
     agent = create_agent(
         model=model, tools=tools, state_schema=V2AgentState,
         middleware=[

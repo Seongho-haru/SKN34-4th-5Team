@@ -94,7 +94,7 @@ function QuestionAnswers({ message, disabled }: { message: ChatMessage; disabled
     </nav>}
     <fieldset disabled={locked}>
       <legend ref={heading} tabIndex={-1}>{question.question}</legend>
-      {!multiple && <p className="chat-question-help">선택하면 바로 보내요</p>}
+      {!multiple && question.choices.length > 0 && <p className="chat-question-help">선택하면 바로 보내요</p>}
       <div className="chat-question-choices">{question.choices.map(choice => <button type="button" key={choice} disabled={locked} aria-pressed={!direct[step] && answers[step] === choice} onClick={event => {
         event.preventDefault(); event.stopPropagation();
         if (locked || sent.current) return;
@@ -115,7 +115,7 @@ function QuestionAnswers({ message, disabled }: { message: ChatMessage; disabled
     </fieldset>
     <p className="chat-question-help">{multiple ? "보내기 전까지 답변을 바꿀 수 있어요. " : ""}채팅창으로 자유롭게 답해도 돼요.</p>
     <p role="status" className="chat-question-help">{submission === "failed" ? disabled ? "응답을 받지 못했어요. 저장된 질문은 채팅에서 수정하거나 다시 시도해 주세요." : "응답을 받지 못했어요. 답변을 바꾸거나 다시 보내 주세요." : submission === "rejected" ? "지금은 보낼 수 없어요. 연결 상태와 진행 중인 요청을 확인한 뒤 다시 보내 주세요." : ""}</p>
-    {(multiple || direct[step]) && <div className="chat-question-actions">
+    {(multiple || !question.choices.length || direct[step]) && <div className="chat-question-actions">
       {multiple && <button type="button" disabled={locked || step === 0} onClick={() => move(step - 1)}>이전</button>}
       {multiple && step < questions.length - 1 ? <button type="button" className="chat-question-primary" disabled={locked || !answers[step]?.trim()} onClick={() => move(step + 1)}>다음</button> : <button type="button" className="chat-question-primary" disabled={locked || !complete} onClick={event => {
         event.preventDefault(); event.stopPropagation(); submit(answers);

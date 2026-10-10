@@ -99,9 +99,39 @@ class DomainToolsTest(TestCase):
         upcoming = self.tools["get_games"].invoke({**args, "upcoming_only": True,
                                                   "as_of": datetime(2099, 9, 15, 16, tzinfo=ZoneInfo("Asia/Seoul"))})
         unfiltered = self.tools["get_games"].invoke(args)
+        status_upcoming = self.tools["get_games"].invoke({**args, "status": "upcoming", "as_of": datetime(2099, 9, 15, 16, tzinfo=ZoneInfo("Asia/Seoul"))})
+        self.assertEqual(status_upcoming["items"], upcoming["items"])
+        all_states = self.tools["get_games"].invoke({**args, "limit": 100})
+        self.assertTrue({"live", "final"} <= {row["status_code"] for row in all_states["items"]})
+        self.assertTrue(unfiltered["has_more"])
+        second = self.tools["get_games"].invoke({**args, "offset": 1})
+        self.assertNotEqual(second["items"][0]["game_code"], unfiltered["items"][0]["game_code"])
         self.assertEqual(upcoming["items"][0]["game_time"], "18:00:00")
         self.assertEqual(upcoming["items"][0]["stadium__stadium_code"], "TEST-JAMSIL")
         self.assertEqual(unfiltered["items"][0]["game_time"], "14:00:00")
+
+    def test_schedule_defaults_kst_explicit_dates_and_stale_saved_rows(self):
+        from llm.tools.baseball import GamesInput
+        from tving.service import TvingError
+        # UTC previous day is already today in KST.
+        with patch("llm.tools.baseball.datetime") as clock:
+            clock.now.return_value = datetime(2099, 9, 15, 0, 30, tzinfo=ZoneInfo("Asia/Seoul"))
+            default = GamesInput()
+            self.assertEqual((default.start_date, default.end_date), (date(2099, 9, 15), date(2099, 9, 21)))
+            for fields in ({"start_date": "2099-09-15"}, {"date_from": "2099-09-15"}, {"end_date": "2099-09-15"}):
+                explicit = GamesInput(**fields)
+                self.assertEqual((explicit.start_date, explicit.end_date), (date(2099, 9, 15), date(2099, 9, 15)))
+            self.assertEqual(GamesInput(upcoming_only=True).end_date, date(2100, 9, 16))
+        args = {"start_date": "2099-09-15", "stadium_id": self.stadium.pk}
+        with patch("tving.service.get_game_range_freshness", side_effect=TvingError("unavailable")):
+            saved = self.tools["get_games"].invoke(args)
+            self.assertEqual(saved["items"][0]["game_code"], "TEST-G1")
+            self.assertTrue(saved["stale"])
+            self.assertTrue(saved["warning"])
+            self.assertEqual(saved["availability"], "available")
+            empty = self.tools["get_games"].invoke({**args, "start_date": "2099-09-16"})
+            self.assertEqual((empty["items"], empty["availability"]), ([], "unknown"))
+        self.assertEqual((saved["start_date"], saved["end_date"]), ("2099-09-15", "2099-09-15"))
 
     def test_registry_and_default_compatibility(self):
         self.assertEqual(DOMAIN_TOOL_NAMES, EXPECTED_NAMES)

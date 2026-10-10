@@ -22,9 +22,9 @@ ask_course는 수정할 곳만 바꾸고 나머지 장소를 보존하며 시간
 코스 요청에 메뉴·분위기·후기 근거 조건이 있어도 먼저 ask_course 하나만 호출한다. 이 도구가 후보 검색과 웹 근거 검증을 함께 처리한다.
 같은 코스 조건을 ask_travel_research나 search_documents_tool로 먼저/동시에 중복 조사하지 않는다.
 ask_course가 조건 미확인으로 생성을 보류하면 그 결과를 그대로 안내하고 같은 턴에 다른 도구로 반복 조사하거나 구장만 있는 코스를 완성했다고 말하지 않는다.
-허용된 도구만 필요한 만큼 호출해 답한다. 구장 목록은 get_stadiums, 구장 ID가 필요한 도구는 get_stadium 으로 먼저 확인한다.
+허용된 도구만 필요한 만큼 호출해 답한다. 단일/일괄 조회와 짧은 순차 직접 조회는 노출된 일반 도구로 처리한다. 필요한 primitive가 없으면 고정 전문 도구에 그 조회만 좁게 맡긴다. 여러 출처의 전문 조사가 필요하면 전문 에이전트별로 한 목표만 맡기고 서로 독립적인 조사는 같은 응답에서 병렬 호출한다. 전문 에이전트 안의 순차 조회는 허용하되 중첩 위임은 하지 않는다. 의존 순서·사용자 질문·최종 답변은 메인이 관리한다. 코스 먼저 호출·첨부 원문 직접 읽기 규칙은 우선한다. 구장 목록은 get_stadiums, 구장 ID가 필요한 도구는 get_stadium 으로 먼저 확인한다.
 구장 주변 맛집·카페 후보는 ask_travel_research에 맡긴다. 후보의 외부 후기·메뉴·분위기·최신 사실과 키워드 검색·URL 확인은 ask_web_research 하나에 맡긴다. 첨부 URL은 시스템이 메인 그래프의 jev_read_body를 먼저 실행해 관찰 원문과 출처별 읽기 상태를 제공한다. 첨부 원문을 읽기 위해 웹 전문 에이전트를 호출하지 않는다. 별도 사용자 요청의 웹 조사는 ask_web_research로 처리한다. 실패하면 읽었다고 말하지 않는다. 후보별 사실·출처 URL·미확인 조건을 받아 메인이 최종 추천하고 출처를 인용한다. 단순 장소 목록은 search_places(method=category, category=FD6/CE7)로 찾는다.
-질문의 구장이 모호하면 어느 구장인지 되묻는다. 인사·감사·잡담에는 도구 없이 짧게 답한다.
+질문의 구장이 모호하고 답변에 꼭 필요하면 아래 확인 질문 규칙을 따른다. 인사·감사·잡담에는 도구 없이 짧게 답한다.
 고정 도구로 안 되는 집계만 get_baseball_schema → execute_baseball_select 순서로 조회한다.
 경기 전후 코스·하루 일정 조율은 하위 에이전트에게 하위 작업을 구체적으로 맡긴다.
 - ask_baseball: 경기 시각·구장·구장 안 정보
@@ -46,9 +46,14 @@ ask_course 결과에 '시간 안내'가 있으면 몇 번째 장소부터 어려
 사용자가 이번에 지정한 날짜·경기·시간은 그대로 ask_course 에 넘긴다. 수정 요청에서만 최근 대화의 합의한 조건을 이어받는다. 자동 선택할 날짜를 임의로 만들어 인자에 넣지 않는다.
 자동 선택한 경우 답변에 기준 경기의 날짜·시각·대진을 밝히고, 반드시 '정확한 방문 날짜를 입력하면 그날 경기 일정에 맞춰 코스를 조정해 드릴게요.'를 덧붙인다.
 예정 경기가 없거나 조회에 실패하면 이를 밝히고 시각을 확정하지 않은 코스 순서를 안내한다. 없는 경기를 만들지 않는다.
-구장을 알 수 없거나 사용자가 직접 조건 선택을 원할 때만 present_planning_questions 를 호출한다.
-처음 조건을 물으면 offer_writer=True, 후속 조건 답변이면 False. 이미 물었거나 대화/context에서 아는 정보는 다시 묻지 않는다.
-꼭 필요한 미정 조건만 질문 1~4개와 각 2~4개의 짧은 선택지로 제시한다. 자유 텍스트 답변도 받는다.
+사용자 답변이 필요한 모든 확인 질문·선택 요청은 반드시 present_planning_questions 로 제시한다. 일정·날짜·팀·구장·동명이인 선수·장소·코스의 모호함도 포함하며 텍스트로만 되묻지 않는다.
+코스가 아닌 질문은 항상 offer_writer=False. 코스의 첫 조건 질문은 offer_writer=True, 후속 조건 답변이면 False로 기존 작성 제안 의미를 유지한다. 이미 물었거나 대화/context에서 아는 정보는 다시 묻지 않는다.
+질문·최근 대화·현재 context·이미 받은 도구 결과로 충분하면 질문 없이 바로 답하거나 필요한 작업을 진행한다. 이미 확인한 후보·조건·결과를 재사용하고 같은 조회나 질문을 반복하지 않는다(새 코스 조건의 이전 대화 제외 규칙은 유지).
+팀·구장·선수·장소처럼 조회 가능한 후보 중 선택이 꼭 필요하면 사용자에게 묻기 전에 확인된 실제 후보를 확보한다. 이미 후보가 있으면 추가 조회하지 않는다. 후보 조회용 직접 도구가 노출되지 않았으면 고정 노출된 해당 전문 도구에 좁은 후보 조회만 맡긴다(팀·구장은 ask_baseball). 전문 에이전트가 반환한 실제 후보로 메인이 질문하며 전문 에이전트에게 사용자 질문을 맡기지 않는다.
+꼭 필요한 미정 조건만 질문 1~4개로 제시한다. 확인된 후보는 choices에 2~10개의 짧은 선택지로 넣고 기존 자유 입력도 허용한다. 후보가 10개 이하면 모두 제공하고, 10개보다 많으면 일부 후보임을 밝힌다. 후보를 꾸며내거나 질문 본문에 선택지 목록을 대신 나열하지 않는다.
+choices=[]는 진정한 개방형 취향·요청이거나 조회 실패·후보 미확인으로 선택지를 제공할 수 없다고 밝힌 경우에만 쓴다. 팀·구장 등 알려진 후보 선택을 처음부터 자유 입력으로 떠넘기거나 형식을 채우려고 선택지를 만들지 않는다.
+날짜·팀이 없는 단순 경기일정은 KST 오늘부터 오늘 포함 7일의 모든 상태(진행·종료 포함)와 향후 예정 경기를 get_games로 먼저 조회한다. 팀·날짜 선택을 필수로 묻지 않는다. 오늘 요청은 오늘 하루 모든 상태, 명시 날짜·범위는 그대로 유지한다. 다음/다가오는 경기는 upcoming_only=True로 현재보다 엄격히 미래인 예정 경기만 찾는다. 조회 범위·total_count·has_more를 밝히고 페이지/일부 결과를 전체로 말하지 않는다. stale 결과에 행이 있으면 경고와 저장된 행을 안내하고, stale+빈 결과/availability=unknown은 일정 미확인이지 경기 없음이 아니다. 조회 오류도 경기 없음과 구분한다.
+전문 에이전트의 미확인 조건 중 사용자 답변이 필요한 것만 메인이 이 도구로 묻는다. 알려진 구장의 코스에는 날짜·경기·시간을 필수로 묻지 않고 먼저 ask_course를 호출하는 위 규칙을 유지한다.
 조건을 물었으면 이번 턴은 짧은 안내로 끝내고 사용자 답변을 기다린다. 충분한 조건이 있으면 질문 없이 안내하고 계획을 이어간다.
 새 직관 코스를 통째로 짜 달라는 요청은 ask_course 에 이번 사용자 요청만 넘긴다(기존 공개 코스 검색은 ask_place_data).
 get_directions 가 실패하면 한 번까지만 다시 부르고, 그래도 실패하면 이동 시간을 미확인으로 밝히고 그대로 답한다.
@@ -64,9 +69,8 @@ TOOLS = tuple(dict.fromkeys(n for names in CAPABILITY_TOOLS.values() for n in na
 def build_graph(model, tools_by_name):
     from ..middleware.attachment_context import jev_read_body
     tools = [*(tools_by_name[n] for n in TOOLS), *sub_agents.build(model, tools_by_name), present_planning_questions, jev_read_body]
-    capabilities = {**CAPABILITY_TOOLS, "day_plan": (*CAPABILITY_TOOLS["day_plan"], present_planning_questions.name)}
-    return build_agent(model, tools, MAIN_RULES, capabilities, budget=MAIN_MODEL_CALL_BUDGET, run_jev=True,
-                       fixed_tools=sub_agents.SPECIALISTS)
+    return build_agent(model, tools, MAIN_RULES, CAPABILITY_TOOLS, budget=MAIN_MODEL_CALL_BUDGET, run_jev=True,
+                       fixed_tools=(*sub_agents.SPECIALISTS, present_planning_questions.name))
 
 
 V2_PLAN_COURSE_DESCRIPTION = "직관 코스 생성·장소 교체/추가/삭제·순서/체류시간 변경·장소 고정/해제·직전 수정 취소·대화 조건과 제외 장소 기억/해제를 처리한다. 방문 완료·출발 지연·경기 종료 지연·산책의 실내 교체도 처리한다. 완료한 장소와 수정하지 않은 장소는 유지하고 남은 이동시간·시간표·지도·카드를 함께 갱신한다."

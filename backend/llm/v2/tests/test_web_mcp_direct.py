@@ -114,7 +114,7 @@ class DirectMCPTests(SimpleTestCase):
         out, calls = self.graph([call("ask_web_research", {"task": "메뉴 확인"}, "web"),
                                  call("jev_read_body", {"url": "https://example.com/menu"}, "body"),
                                  AIMessage("메뉴 확인"), AIMessage("메인")], ())
-        self.assertEqual(set(calls[0]["tools"]), set(chain.sub_agents.SPECIALISTS))
+        self.assertEqual(set(calls[0]["tools"]), set(chain.sub_agents.SPECIALISTS) | {"present_planning_questions"})
         self.assertEqual(set(calls[1]["tools"]), {"jev_browse", "jev_read_body", "web_search"})
         self.assertEqual(self.executed, [("jev_read_body", {"url": "https://example.com/menu"})])
         self.assertEqual(next(m for m in out["messages"] if isinstance(m, ToolMessage)).status, "success")

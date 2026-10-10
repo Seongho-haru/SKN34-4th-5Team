@@ -72,7 +72,7 @@ get_baseball_schema, execute_baseball_select = create_baseball_tools()
 
 
 """baseball domain tools."""
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Literal
 from zoneinfo import ZoneInfo
 from pydantic import AwareDatetime, Field, StrictBool, StrictInt, model_validator
@@ -91,6 +91,14 @@ class StandingsInput(LimitInput):
             raise ValueError("올바른 팀 코드가 아닙니다.")
         return self
 
+def _game_range(start_date=None, end_date=None, upcoming=False):
+    today = datetime.now(ZoneInfo("Asia/Seoul")).date()
+    explicit = start_date is not None or end_date is not None
+    start_date = start_date or (end_date if explicit else today)
+    end_date = end_date or (start_date if explicit else today + timedelta(days=366 if upcoming else 6))
+    return start_date, end_date
+
+
 class GamesInput(LimitInput):
     start_date: date | None = None
     end_date: date | None = None
@@ -108,8 +116,9 @@ class GamesInput(LimitInput):
 
     @model_validator(mode="after")
     def validate_range(self):
-        self.start_date = self.start_date or self.date_from or date.today()
-        self.end_date = self.end_date or self.date_to or self.start_date + timedelta(days=366)
+        self.start_date, self.end_date = _game_range(self.start_date or self.date_from,
+                                                    self.end_date or self.date_to,
+                                                    self.upcoming_only or self.status == "upcoming")
         if self.start_date > self.end_date or (self.end_date - self.start_date).days > 366:
             raise ValueError("날짜 범위는 순서대로 최대 366일이어야 합니다.")
         if self.team_code and not is_team_code(self.team_code):
@@ -139,7 +148,10 @@ def create_baseball_domain_tools():
         from baseball.models import TeamProfile
         from tving.relational import read_team, team_sync_time
         requested = snapshot_date or as_of
-        freshness = tving_service.get_standings_freshness(requested)
+        try:
+            freshness = tving_service.get_standings_freshness(requested)
+        except tving_service.TvingError:
+            freshness = {"stale": True, "warning": "최신 순위를 확인하지 못해 저장된 자료만 조회합니다."}
         snapshots = StandingHistory.objects.all()
         if as_of and not snapshot_date:
             snapshots = snapshots.filter(snapshot_date__lte=as_of)
@@ -175,8 +187,8 @@ def create_baseball_domain_tools():
                   date_from=None, date_to=None, team=None, stadium=None, status="all", home_away="all"):
         """날짜 범위의 일정과 결과를 팀/구장으로 필터링한다."""
         from .assistant import team_code as resolve_team, to_stadium_code, STATUS
-        start_date = start_date or date_from or date.today()
-        end_date = end_date or date_to or start_date + timedelta(days=366)
+        upcoming_only = upcoming_only or status == "upcoming"
+        start_date, end_date = _game_range(start_date or date_from, end_date or date_to, upcoming_only)
         code = db_team_code(team_code) if team_code else resolve_team(team)
         if team and not code:
             raise ToolException("팀 이름을 확인해 주세요.")
@@ -207,7 +219,10 @@ def create_baseball_domain_tools():
             )
         # 다음 경기 날짜까지만 최신성을 확인한 뒤 최종 행을 읽는다.
         checked_end = (query.order_by("game_date", "game_time", "game_code").values_list("game_date", flat=True).first() or end_date) if upcoming_only else end_date
-        freshness = tving_service.get_game_range_freshness(start_date, checked_end)
+        try:
+            freshness = tving_service.get_game_range_freshness(start_date, checked_end)
+        except tving_service.TvingError:
+            freshness = {"stale": True, "warning": "최신 일정을 확인하지 못해 저장된 자료만 조회합니다."}
         total = query.count()
         rows = _rows(query.order_by("game_date", "game_time", "game_code")[offset:], (
             "id", "game_code", "game_date", "game_time", "home_team__team_code", "home_team__team_name_ko",
@@ -222,6 +237,8 @@ def create_baseball_domain_tools():
                   "stadium": row["stadium__stadium_name_ko"]} for row in rows]
         return _result(rows, games=games, count_is_partial=offset + len(rows) < total,
                        total_count=total, offset=offset, has_more=offset + len(rows) < total,
+                       start_date=start_date.isoformat(), end_date=end_date.isoformat(), limit=limit,
+                       availability="unknown" if not total and freshness.get("stale") else "available" if total else "empty",
                        as_of=cutoff.isoformat() if upcoming_only else _json(as_of), **freshness)
 
     def search_players(team_code=None, player_code=None, name=None, limit=20, include_detail=None, offset=0):
@@ -261,7 +278,7 @@ def create_baseball_domain_tools():
 
     specs = (
         (get_standings, 'get_standings', '저장된 순위와 실제 날짜를 반환한다. team_code와 include_detail로 현재 구단 기록·팀내순위·선수단을 조회한다. 상세는 과거 순위 시점이 아니다.', StandingsInput),
-        (get_games, 'get_games', '저장된 일정/결과를 팀 또는 구장으로 좁힌다. upcoming_only와 timezone-aware as_of, limit=1로 다음 예정 경기를 찾는다. 저장된 시작 시각을 정확한 시각으로 사용한다.', GamesInput),
+        (get_games, 'get_games', '저장된 일정/결과를 조회한다. 날짜 미정은 KST 오늘 포함 7일 모든 상태, 명시 날짜 하나는 그날만, 명시 범위는 그대로 조회한다. 다음/다가오는 경기는 upcoming_only=True 또는 status=upcoming으로 as_of 이후의 예정 경기만 조회하며 날짜 미정은 최대 366일을 탐색한다. limit/offset으로 페이지 조회하고 start_date/end_date/total_count/has_more를 안내한다. stale+저장 행은 경고와 함께 사용하고 availability=unknown은 경기 없음이 아니다. 저장된 시작 시각은 정확한 시각이다.', GamesInput),
         (search_players, 'search_players', '저장된 구단/코드/이름 선수 목록을 페이지 조회하며 자동 수집하지 않는다. 이름으로 선수 소개·프로필·상세 기록을 물으면 include_detail=True로 detail의 프로필·시즌·통산 기록을 함께 조회한다(선수 코드 조회는 기본 포함). items의 imageUrl과 detailPath는 상세 포함 여부와 무관하게 반환되며, 소개에 유용하면 제공된 값을 Markdown 이미지·상세 링크로 사용한다. 없는 값이나 URL은 만들지 않는다.', PlayerInput),
     )
     return tuple(_tool(*spec) for spec in specs)
