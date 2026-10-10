@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "provenance": {
+    "source": "Coordinator-supplied actual reproduction observations; no new probe executed while saving these records",
+    "observed_date": "2026-10-10",
+    "timezone": "Asia/Seoul",
+    "environment": "Fresh Docker actual graph/provider first-selection probes",
+    "scope": "First model tool selection only; returned model message replaced after capture to prevent tool execution; no persisted chat",
+    "limitations": "Not end-to-end answer quality, not a passing quality evaluation, not a fix; original historical JEV decision unknown; no raw provider output supplied or fabricated",
+    "seed_oracle_changed": false
+  },
+  "cases": [
+    {
+      "id": "schedule-empty-enumerable-choices-20261010",
+      "query": "경기일정 조회 해줘",
+      "status": "reproduced_issue",
+      "actual_observation": {
+        "decision": {
+          "allowed": true,
+          "capabilities": ["web_research", "schedule"],
+          "course_request": "NONE"
+        },
+        "exposed_tools": ["get_games", "ask_web_research", "ask_course", "ask_baseball", "ask_travel_research", "ask_place_data", "present_planning_questions"],
+        "selected_tool": "present_planning_questions",
+        "selected_args": {
+          "offer_writer": false,
+          "questions": [
+            {"question": "어느 팀이나 구장의 경기 일정을 찾아볼까요?", "choices": []}
+          ]
+        }
+      },
+      "desired_regression_policy": {
+        "expected_route": "When asking for a known enumerable team/stadium, acquire real candidates through available direct tools or ask_baseball before asking, then supply them as choices while preserving free input. This does not prescribe whether a full schedule listing is preferable to clarification; an appropriate full-list alternative is not ruled out.",
+        "must_not": ["Invent team/stadium candidates or provider output", "Assume get_stadiums is exposed", "Treat this recorded first selection as a quality pass or a fixed issue"]
+      }
+    },
+    {
+      "id": "nearby-empty-enumerable-choices-20261010",
+      "query": "음 그냥 가고싶은데 주변에서 뭘해야해?",
+      "status": "reproduced_issue",
+      "actual_observation": {
+        "decision": {
+          "allowed": true,
+          "capabilities": [],
+          "course_request": "NONE"
+        },
+        "exposed_tools": ["ask_web_research", "ask_course", "ask_baseball", "ask_travel_research", "ask_place_data", "present_planning_questions"],
+        "selected_tool": "present_planning_questions",
+        "selected_args": {
+          "offer_writer": true,
+          "questions": [
+            {"question": "어느 야구장 주변으로 알아볼까요? 구장 이름이나 응원팀을 알려주세요.", "choices": []}
+          ]
+        }
+      },
+      "desired_regression_policy": {
+        "expected_route": "Before asking which known enumerable stadium/team the user means, acquire real candidates through available direct tools or ask_baseball and supply them as choices while preserving free input. The empty capability set and first selection above are observations, not desired classifier labels.",
+        "must_not": ["Invent team/stadium candidates or provider output", "Assume get_stadiums is exposed", "Treat this recorded first selection as a quality pass or a fixed issue"]
+      }
+    }
+  ]
+}

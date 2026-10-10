@@ -1,0 +1,634 @@
+{
+  "schema_version": 1,
+  "group": "clarification",
+  "cases": [
+    {
+      "id": "clarification-stadium",
+      "family": "clarification-stadium",
+      "input": "직관할 구장 후보 중 하나를 고르고 싶어",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "clarify-stadium-candidates",
+          "tool": "ask_baseball",
+          "data": {
+            "candidates": [
+              "잠실",
+              "사직",
+              "고척"
+            ],
+            "status": "success"
+          }
+        }
+      ],
+      "rubric": "Frozen observations; main-owned UI then wait for user, free input available; never re-ask known context. Final after follow-up on next turn.",
+      "expected": {
+        "required_events": [
+          "lookup",
+          "ui",
+          "user_answer",
+          "followup_lookup",
+          "final"
+        ],
+        "order": [
+          [
+            "lookup",
+            "ui"
+          ],
+          [
+            "ui",
+            "user_answer"
+          ],
+          [
+            "user_answer",
+            "followup_lookup"
+          ],
+          [
+            "followup_lookup",
+            "final"
+          ]
+        ],
+        "forbidden_tools": [],
+        "ui": {
+          "required": true,
+          "choices": [
+            "잠실",
+            "사직",
+            "고척"
+          ],
+          "offer_writer": false,
+          "free_input": true
+        },
+        "notices": []
+      }
+    },
+    {
+      "id": "clarification-teams",
+      "family": "clarification-teams",
+      "input": "응원팀을 정해서 구장 안내받고 싶어",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "clarify-teams-candidates",
+          "tool": "ask_baseball",
+          "data": {
+            "candidates": [
+              "LG",
+              "두산",
+              "롯데"
+            ],
+            "status": "success"
+          }
+        }
+      ],
+      "rubric": "Frozen observations; main-owned UI then wait for user, free input available; never re-ask known context. Final after follow-up on next turn.",
+      "expected": {
+        "required_events": [
+          "lookup",
+          "ui",
+          "user_answer",
+          "followup_lookup",
+          "final"
+        ],
+        "order": [
+          [
+            "lookup",
+            "ui"
+          ],
+          [
+            "ui",
+            "user_answer"
+          ],
+          [
+            "user_answer",
+            "followup_lookup"
+          ],
+          [
+            "followup_lookup",
+            "final"
+          ]
+        ],
+        "forbidden_tools": [],
+        "ui": {
+          "required": true,
+          "choices": [
+            "LG",
+            "두산",
+            "롯데"
+          ],
+          "offer_writer": false,
+          "free_input": true
+        },
+        "notices": []
+      }
+    },
+    {
+      "id": "clarification-players",
+      "family": "clarification-players",
+      "input": "동명이인 합성 선수 중 누구인지 고를게",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "clarify-players-candidates",
+          "tool": "search_players",
+          "data": {
+            "candidates": [
+              "합성 선수 A",
+              "합성 선수 B"
+            ],
+            "status": "success"
+          }
+        }
+      ],
+      "rubric": "Frozen observations; main-owned UI then wait for user, free input available; never re-ask known context. Final after follow-up on next turn.",
+      "expected": {
+        "required_events": [
+          "lookup",
+          "ui",
+          "user_answer",
+          "followup_lookup",
+          "final"
+        ],
+        "order": [
+          [
+            "lookup",
+            "ui"
+          ],
+          [
+            "ui",
+            "user_answer"
+          ],
+          [
+            "user_answer",
+            "followup_lookup"
+          ],
+          [
+            "followup_lookup",
+            "final"
+          ]
+        ],
+        "forbidden_tools": [],
+        "ui": {
+          "required": true,
+          "choices": [
+            "합성 선수 A",
+            "합성 선수 B"
+          ],
+          "offer_writer": false,
+          "free_input": true
+        },
+        "notices": []
+      }
+    },
+    {
+      "id": "clarification-places",
+      "family": "clarification-places",
+      "input": "검색된 카페 중 하나를 고를게",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "clarify-places-candidates",
+          "tool": "search_places",
+          "data": {
+            "candidates": [
+              "합성 카페 A",
+              "합성 카페 B"
+            ],
+            "status": "success"
+          }
+        }
+      ],
+      "rubric": "Frozen observations; main-owned UI then wait for user, free input available; never re-ask known context. Final after follow-up on next turn.",
+      "expected": {
+        "required_events": [
+          "lookup",
+          "ui",
+          "user_answer",
+          "followup_lookup",
+          "final"
+        ],
+        "order": [
+          [
+            "lookup",
+            "ui"
+          ],
+          [
+            "ui",
+            "user_answer"
+          ],
+          [
+            "user_answer",
+            "followup_lookup"
+          ],
+          [
+            "followup_lookup",
+            "final"
+          ]
+        ],
+        "forbidden_tools": [],
+        "ui": {
+          "required": true,
+          "choices": [
+            "합성 카페 A",
+            "합성 카페 B"
+          ],
+          "offer_writer": false,
+          "free_input": true
+        },
+        "notices": []
+      }
+    },
+    {
+      "id": "clarification-ten",
+      "family": "clarification-ten",
+      "input": "열 개 구장 후보를 모두 보여줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "clarify-ten-candidates",
+          "tool": "ask_baseball",
+          "data": {
+            "candidates": [
+              "합성 구장 0",
+              "합성 구장 1",
+              "합성 구장 2",
+              "합성 구장 3",
+              "합성 구장 4",
+              "합성 구장 5",
+              "합성 구장 6",
+              "합성 구장 7",
+              "합성 구장 8",
+              "합성 구장 9"
+            ],
+            "status": "success"
+          }
+        }
+      ],
+      "rubric": "Frozen observations; main-owned UI then wait for user, free input available; never re-ask known context. Final after follow-up on next turn.",
+      "expected": {
+        "required_events": [
+          "lookup",
+          "ui",
+          "user_answer",
+          "followup_lookup",
+          "final"
+        ],
+        "order": [
+          [
+            "lookup",
+            "ui"
+          ],
+          [
+            "ui",
+            "user_answer"
+          ],
+          [
+            "user_answer",
+            "followup_lookup"
+          ],
+          [
+            "followup_lookup",
+            "final"
+          ]
+        ],
+        "forbidden_tools": [],
+        "ui": {
+          "required": true,
+          "choices": [
+            "합성 구장 0",
+            "합성 구장 1",
+            "합성 구장 2",
+            "합성 구장 3",
+            "합성 구장 4",
+            "합성 구장 5",
+            "합성 구장 6",
+            "합성 구장 7",
+            "합성 구장 8",
+            "합성 구장 9"
+          ],
+          "offer_writer": false,
+          "free_input": true
+        },
+        "notices": []
+      }
+    },
+    {
+      "id": "clarification-eleven",
+      "family": "clarification-eleven",
+      "input": "많은 구장 후보 중에서 고르고 싶어",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "clarify-eleven-candidates",
+          "tool": "ask_baseball",
+          "data": {
+            "candidates": [
+              "합성 구장 0",
+              "합성 구장 1",
+              "합성 구장 2",
+              "합성 구장 3",
+              "합성 구장 4",
+              "합성 구장 5",
+              "합성 구장 6",
+              "합성 구장 7",
+              "합성 구장 8",
+              "합성 구장 9",
+              "합성 구장 10"
+            ],
+            "status": "success"
+          }
+        }
+      ],
+      "rubric": "Frozen observations; main-owned UI then wait for user, free input available; never re-ask known context. Final after follow-up on next turn.",
+      "expected": {
+        "required_events": [
+          "lookup",
+          "ui",
+          "user_answer",
+          "followup_lookup",
+          "final"
+        ],
+        "order": [
+          [
+            "lookup",
+            "ui"
+          ],
+          [
+            "ui",
+            "user_answer"
+          ],
+          [
+            "user_answer",
+            "followup_lookup"
+          ],
+          [
+            "followup_lookup",
+            "final"
+          ]
+        ],
+        "forbidden_tools": [],
+        "ui": {
+          "required": true,
+          "choices": [
+            "합성 구장 0",
+            "합성 구장 1",
+            "합성 구장 2",
+            "합성 구장 3",
+            "합성 구장 4",
+            "합성 구장 5",
+            "합성 구장 6",
+            "합성 구장 7",
+            "합성 구장 8",
+            "합성 구장 9"
+          ],
+          "offer_writer": false,
+          "free_input": true
+        },
+        "notices": [
+          "partial_candidates"
+        ]
+      }
+    },
+    {
+      "id": "clarification-known-screen",
+      "family": "clarification-known-screen",
+      "input": "선택한 잠실 일정 보여줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {
+        "stadium": "JAMSIL"
+      },
+      "observations": [],
+      "rubric": "Frozen observations; main-owned UI then wait for user, free input available; never re-ask known context. Final after follow-up on next turn.",
+      "expected": {
+        "required_events": [
+          "final"
+        ],
+        "order": [],
+        "forbidden_tools": [
+          "present_planning_questions"
+        ],
+        "ui": {
+          "required": false,
+          "choices": [],
+          "offer_writer": false,
+          "free_input": true
+        },
+        "notices": []
+      }
+    },
+    {
+      "id": "clarification-known-history",
+      "family": "clarification-known-history",
+      "input": "아까 선택한 사직으로 이어가자",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {
+        "confirmed_stadium": "사직"
+      },
+      "observations": [],
+      "rubric": "Frozen observations; main-owned UI then wait for user, free input available; never re-ask known context. Final after follow-up on next turn.",
+      "expected": {
+        "required_events": [
+          "final"
+        ],
+        "order": [],
+        "forbidden_tools": [
+          "present_planning_questions"
+        ],
+        "ui": {
+          "required": false,
+          "choices": [],
+          "offer_writer": false,
+          "free_input": true
+        },
+        "notices": []
+      }
+    },
+    {
+      "id": "clarification-free-preference",
+      "family": "clarification-free-preference",
+      "input": "동행에게 바라는 분위기를 직접 적고 싶어",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [],
+      "rubric": "Frozen observations; main-owned UI then wait for user, free input available; never re-ask known context. Final after follow-up on next turn.",
+      "expected": {
+        "required_events": [
+          "ui",
+          "user_answer",
+          "final"
+        ],
+        "order": [
+          [
+            "ui",
+            "user_answer"
+          ],
+          [
+            "user_answer",
+            "final"
+          ]
+        ],
+        "forbidden_tools": [],
+        "ui": {
+          "required": true,
+          "choices": [],
+          "offer_writer": false,
+          "free_input": true
+        },
+        "notices": []
+      }
+    },
+    {
+      "id": "clarification-lookup-failed",
+      "family": "clarification-lookup-failed",
+      "input": "구장 후보 조회가 실패했는데 직접 적을게",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "clarify-lookup-failed-candidates",
+          "tool": "ask_baseball",
+          "data": {
+            "candidates": [],
+            "status": "error"
+          }
+        }
+      ],
+      "rubric": "Frozen observations; main-owned UI then wait for user, free input available; never re-ask known context. Final after follow-up on next turn.",
+      "expected": {
+        "required_events": [
+          "ui",
+          "user_answer",
+          "final"
+        ],
+        "order": [
+          [
+            "ui",
+            "user_answer"
+          ],
+          [
+            "user_answer",
+            "final"
+          ]
+        ],
+        "forbidden_tools": [],
+        "ui": {
+          "required": true,
+          "choices": [],
+          "offer_writer": false,
+          "free_input": true
+        },
+        "notices": [
+          "lookup_failed"
+        ]
+      }
+    },
+    {
+      "id": "clarification-followup",
+      "family": "clarification-followup",
+      "input": "앞서 고른 잠실로 최종 안내해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {
+        "confirmed_stadium": "잠실"
+      },
+      "observations": [],
+      "rubric": "Frozen observations; main-owned UI then wait for user, free input available; never re-ask known context. Final after follow-up on next turn.",
+      "expected": {
+        "required_events": [
+          "final"
+        ],
+        "order": [],
+        "forbidden_tools": [
+          "present_planning_questions"
+        ],
+        "ui": {
+          "required": false,
+          "choices": [],
+          "offer_writer": false,
+          "free_input": true
+        },
+        "notices": []
+      }
+    },
+    {
+      "id": "clarification-course-known",
+      "family": "clarification-course-known",
+      "input": "고척 코스는 날짜 없어도 우선 만들어줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {
+        "stadium": "GOCHEOK"
+      },
+      "observations": [],
+      "rubric": "Frozen observations; main-owned UI then wait for user, free input available; never re-ask known context. Final after follow-up on next turn.",
+      "expected": {
+        "required_events": [
+          "final"
+        ],
+        "order": [],
+        "forbidden_tools": [
+          "present_planning_questions"
+        ],
+        "ui": {
+          "required": false,
+          "choices": [],
+          "offer_writer": false,
+          "free_input": true
+        },
+        "notices": []
+      }
+    }
+  ]
+}

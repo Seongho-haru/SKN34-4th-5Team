@@ -1,0 +1,718 @@
+{
+  "schema_version": 1,
+  "group": "schedule",
+  "cases": [
+    {
+      "id": "schedule-today",
+      "family": "schedule-today",
+      "input": "오늘 경기 전체 상태 보여줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "schedule-today",
+          "tool": "get_games",
+          "data": {
+            "start_date": "2026-10-10",
+            "end_date": "2026-10-10",
+            "upcoming_only": false,
+            "status": "all",
+            "availability": "available",
+            "stale": false,
+            "total_count": 3,
+            "has_more": false,
+            "offset": 0,
+            "games": [
+              {
+                "game_date": "2026-10-10",
+                "game_time": "18:00:00",
+                "home_team": "합성 홈 A",
+                "away_team": "합성 원정 B",
+                "status_code": "END"
+              },
+              {
+                "game_date": "2026-10-10",
+                "game_time": "18:01:00",
+                "home_team": "합성 홈 C",
+                "away_team": "합성 원정 D",
+                "status_code": "READY"
+              },
+              {
+                "game_date": "2026-10-10",
+                "game_time": "18:02:00",
+                "home_team": "합성 홈 A",
+                "away_team": "합성 원정 B",
+                "status_code": "CANCEL"
+              }
+            ],
+            "demo": false
+          }
+        }
+      ],
+      "rubric": "KST fixed clock; all states for today/default7, strictly future scheduled only for next. Range/pagination/freshness explicit; error/unknown are not no-game. Synthetic fixtures never real game claims.",
+      "expected": {
+        "schedule": {
+          "start_date": "2026-10-10",
+          "end_date": "2026-10-10",
+          "upcoming_only": false,
+          "status": "all",
+          "availability": "available",
+          "stale": false,
+          "total_count": 3,
+          "has_more": false,
+          "offset": 0
+        },
+        "notices": [],
+        "strict_future": false
+      }
+    },
+    {
+      "id": "schedule-next",
+      "family": "schedule-next",
+      "input": "지금 이후 다음 예정 경기 보여줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "schedule-next",
+          "tool": "get_games",
+          "data": {
+            "start_date": "2026-10-10",
+            "end_date": "2027-10-11",
+            "upcoming_only": true,
+            "status": "upcoming",
+            "availability": "available",
+            "stale": false,
+            "total_count": 1,
+            "has_more": false,
+            "offset": 0,
+            "games": [
+              {
+                "game_date": "2026-10-10",
+                "game_time": "18:01:00",
+                "home_team": "합성 홈 A",
+                "away_team": "합성 원정 B",
+                "status_code": "READY"
+              }
+            ],
+            "demo": false
+          }
+        }
+      ],
+      "rubric": "KST fixed clock; all states for today/default7, strictly future scheduled only for next. Range/pagination/freshness explicit; error/unknown are not no-game. Synthetic fixtures never real game claims.",
+      "expected": {
+        "schedule": {
+          "start_date": "2026-10-10",
+          "end_date": "2027-10-11",
+          "upcoming_only": true,
+          "status": "upcoming",
+          "availability": "available",
+          "stale": false,
+          "total_count": 1,
+          "has_more": false,
+          "offset": 0
+        },
+        "notices": [],
+        "strict_future": true
+      }
+    },
+    {
+      "id": "schedule-at-cutoff",
+      "family": "schedule-at-cutoff",
+      "input": "18시 정각 경기는 다음 경기에서 제외해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "schedule-at-cutoff",
+          "tool": "get_games",
+          "data": {
+            "start_date": "2026-10-10",
+            "end_date": "2027-10-11",
+            "upcoming_only": true,
+            "status": "upcoming",
+            "availability": "available",
+            "stale": false,
+            "total_count": 1,
+            "has_more": false,
+            "offset": 0,
+            "games": [
+              {
+                "game_date": "2026-10-10",
+                "game_time": "18:01:00",
+                "home_team": "합성 홈 A",
+                "away_team": "합성 원정 B",
+                "status_code": "READY"
+              }
+            ],
+            "demo": false
+          }
+        }
+      ],
+      "rubric": "KST fixed clock; all states for today/default7, strictly future scheduled only for next. Range/pagination/freshness explicit; error/unknown are not no-game. Synthetic fixtures never real game claims.",
+      "expected": {
+        "schedule": {
+          "start_date": "2026-10-10",
+          "end_date": "2027-10-11",
+          "upcoming_only": true,
+          "status": "upcoming",
+          "availability": "available",
+          "stale": false,
+          "total_count": 1,
+          "has_more": false,
+          "offset": 0
+        },
+        "notices": [],
+        "strict_future": true
+      }
+    },
+    {
+      "id": "schedule-exact-date",
+      "family": "schedule-exact-date",
+      "input": "10월 12일 경기만 보여줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "schedule-exact-date",
+          "tool": "get_games",
+          "data": {
+            "start_date": "2026-10-12",
+            "end_date": "2026-10-12",
+            "upcoming_only": false,
+            "status": "all",
+            "availability": "available",
+            "stale": false,
+            "total_count": 1,
+            "has_more": false,
+            "offset": 0,
+            "games": [
+              {
+                "game_date": "2026-10-12",
+                "game_time": "18:00:00",
+                "home_team": "합성 홈 A",
+                "away_team": "합성 원정 B",
+                "status_code": "END"
+              }
+            ],
+            "demo": false
+          }
+        }
+      ],
+      "rubric": "KST fixed clock; all states for today/default7, strictly future scheduled only for next. Range/pagination/freshness explicit; error/unknown are not no-game. Synthetic fixtures never real game claims.",
+      "expected": {
+        "schedule": {
+          "start_date": "2026-10-12",
+          "end_date": "2026-10-12",
+          "upcoming_only": false,
+          "status": "all",
+          "availability": "available",
+          "stale": false,
+          "total_count": 1,
+          "has_more": false,
+          "offset": 0
+        },
+        "notices": [],
+        "strict_future": false
+      }
+    },
+    {
+      "id": "schedule-explicit-range",
+      "family": "schedule-explicit-range",
+      "input": "10월 11일부터 13일까지 조회해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "schedule-explicit-range",
+          "tool": "get_games",
+          "data": {
+            "start_date": "2026-10-11",
+            "end_date": "2026-10-13",
+            "upcoming_only": false,
+            "status": "all",
+            "availability": "available",
+            "stale": false,
+            "total_count": 2,
+            "has_more": false,
+            "offset": 0,
+            "games": [
+              {
+                "game_date": "2026-10-11",
+                "game_time": "18:00:00",
+                "home_team": "합성 홈 A",
+                "away_team": "합성 원정 B",
+                "status_code": "END"
+              },
+              {
+                "game_date": "2026-10-11",
+                "game_time": "18:01:00",
+                "home_team": "합성 홈 C",
+                "away_team": "합성 원정 D",
+                "status_code": "READY"
+              }
+            ],
+            "demo": false
+          }
+        }
+      ],
+      "rubric": "KST fixed clock; all states for today/default7, strictly future scheduled only for next. Range/pagination/freshness explicit; error/unknown are not no-game. Synthetic fixtures never real game claims.",
+      "expected": {
+        "schedule": {
+          "start_date": "2026-10-11",
+          "end_date": "2026-10-13",
+          "upcoming_only": false,
+          "status": "all",
+          "availability": "available",
+          "stale": false,
+          "total_count": 2,
+          "has_more": false,
+          "offset": 0
+        },
+        "notices": [],
+        "strict_future": false
+      }
+    },
+    {
+      "id": "schedule-default-seven",
+      "family": "schedule-default-seven",
+      "input": "팀 미정 경기 일정 전체 조회해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "schedule-default-seven",
+          "tool": "get_games",
+          "data": {
+            "start_date": "2026-10-10",
+            "end_date": "2026-10-16",
+            "upcoming_only": false,
+            "status": "all",
+            "availability": "available",
+            "stale": false,
+            "total_count": 3,
+            "has_more": false,
+            "offset": 0,
+            "games": [
+              {
+                "game_date": "2026-10-10",
+                "game_time": "18:00:00",
+                "home_team": "합성 홈 A",
+                "away_team": "합성 원정 B",
+                "status_code": "END"
+              },
+              {
+                "game_date": "2026-10-10",
+                "game_time": "18:01:00",
+                "home_team": "합성 홈 C",
+                "away_team": "합성 원정 D",
+                "status_code": "READY"
+              },
+              {
+                "game_date": "2026-10-10",
+                "game_time": "18:02:00",
+                "home_team": "합성 홈 A",
+                "away_team": "합성 원정 B",
+                "status_code": "CANCEL"
+              }
+            ],
+            "demo": false
+          }
+        }
+      ],
+      "rubric": "KST fixed clock; all states for today/default7, strictly future scheduled only for next. Range/pagination/freshness explicit; error/unknown are not no-game. Synthetic fixtures never real game claims.",
+      "expected": {
+        "schedule": {
+          "start_date": "2026-10-10",
+          "end_date": "2026-10-16",
+          "upcoming_only": false,
+          "status": "all",
+          "availability": "available",
+          "stale": false,
+          "total_count": 3,
+          "has_more": false,
+          "offset": 0
+        },
+        "notices": [],
+        "strict_future": false
+      }
+    },
+    {
+      "id": "schedule-page-one",
+      "family": "schedule-page-one",
+      "input": "일정 첫 두 건과 더 있는지 알려줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "schedule-page-one",
+          "tool": "get_games",
+          "data": {
+            "start_date": "2026-10-10",
+            "end_date": "2026-10-16",
+            "upcoming_only": false,
+            "status": "all",
+            "availability": "available",
+            "stale": false,
+            "total_count": 3,
+            "has_more": true,
+            "offset": 0,
+            "games": [
+              {
+                "game_date": "2026-10-10",
+                "game_time": "18:00:00",
+                "home_team": "합성 홈 A",
+                "away_team": "합성 원정 B",
+                "status_code": "END"
+              },
+              {
+                "game_date": "2026-10-10",
+                "game_time": "18:01:00",
+                "home_team": "합성 홈 C",
+                "away_team": "합성 원정 D",
+                "status_code": "READY"
+              }
+            ],
+            "demo": false
+          }
+        }
+      ],
+      "rubric": "KST fixed clock; all states for today/default7, strictly future scheduled only for next. Range/pagination/freshness explicit; error/unknown are not no-game. Synthetic fixtures never real game claims.",
+      "expected": {
+        "schedule": {
+          "start_date": "2026-10-10",
+          "end_date": "2026-10-16",
+          "upcoming_only": false,
+          "status": "all",
+          "availability": "available",
+          "stale": false,
+          "total_count": 3,
+          "has_more": true,
+          "offset": 0
+        },
+        "notices": [
+          "partial_results"
+        ],
+        "strict_future": false
+      }
+    },
+    {
+      "id": "schedule-page-two",
+      "family": "schedule-page-two",
+      "input": "다음 페이지 이어서 보여줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "schedule-page-two",
+          "tool": "get_games",
+          "data": {
+            "start_date": "2026-10-10",
+            "end_date": "2026-10-16",
+            "upcoming_only": false,
+            "status": "all",
+            "availability": "available",
+            "stale": false,
+            "total_count": 3,
+            "has_more": false,
+            "offset": 2,
+            "games": [
+              {
+                "game_date": "2026-10-10",
+                "game_time": "18:02:00",
+                "home_team": "합성 홈 A",
+                "away_team": "합성 원정 B",
+                "status_code": "CANCEL"
+              }
+            ],
+            "demo": false
+          }
+        }
+      ],
+      "rubric": "KST fixed clock; all states for today/default7, strictly future scheduled only for next. Range/pagination/freshness explicit; error/unknown are not no-game. Synthetic fixtures never real game claims.",
+      "expected": {
+        "schedule": {
+          "start_date": "2026-10-10",
+          "end_date": "2026-10-16",
+          "upcoming_only": false,
+          "status": "all",
+          "availability": "available",
+          "stale": false,
+          "total_count": 3,
+          "has_more": false,
+          "offset": 2
+        },
+        "notices": [],
+        "strict_future": false
+      }
+    },
+    {
+      "id": "schedule-stale-saved",
+      "family": "schedule-stale-saved",
+      "input": "최신 확인 안 돼도 저장 일정 안내해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "schedule-stale-saved",
+          "tool": "get_games",
+          "data": {
+            "start_date": "2026-10-10",
+            "end_date": "2026-10-16",
+            "upcoming_only": false,
+            "status": "all",
+            "availability": "available",
+            "stale": true,
+            "total_count": 3,
+            "has_more": false,
+            "offset": 0,
+            "games": [
+              {
+                "game_date": "2026-10-10",
+                "game_time": "18:00:00",
+                "home_team": "합성 홈 A",
+                "away_team": "합성 원정 B",
+                "status_code": "END"
+              },
+              {
+                "game_date": "2026-10-10",
+                "game_time": "18:01:00",
+                "home_team": "합성 홈 C",
+                "away_team": "합성 원정 D",
+                "status_code": "READY"
+              },
+              {
+                "game_date": "2026-10-10",
+                "game_time": "18:02:00",
+                "home_team": "합성 홈 A",
+                "away_team": "합성 원정 B",
+                "status_code": "CANCEL"
+              }
+            ],
+            "demo": false
+          }
+        }
+      ],
+      "rubric": "KST fixed clock; all states for today/default7, strictly future scheduled only for next. Range/pagination/freshness explicit; error/unknown are not no-game. Synthetic fixtures never real game claims.",
+      "expected": {
+        "schedule": {
+          "start_date": "2026-10-10",
+          "end_date": "2026-10-16",
+          "upcoming_only": false,
+          "status": "all",
+          "availability": "available",
+          "stale": true,
+          "total_count": 3,
+          "has_more": false,
+          "offset": 0
+        },
+        "notices": [
+          "stale_saved"
+        ],
+        "strict_future": false
+      }
+    },
+    {
+      "id": "schedule-stale-empty",
+      "family": "schedule-stale-empty",
+      "input": "갱신 실패에 빈 조회면 일정 확정하지 마",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "schedule-stale-empty",
+          "tool": "get_games",
+          "data": {
+            "start_date": "2026-10-10",
+            "end_date": "2026-10-16",
+            "upcoming_only": false,
+            "status": "all",
+            "availability": "unknown",
+            "stale": true,
+            "total_count": 0,
+            "has_more": false,
+            "offset": 0,
+            "games": [],
+            "demo": false
+          }
+        }
+      ],
+      "rubric": "KST fixed clock; all states for today/default7, strictly future scheduled only for next. Range/pagination/freshness explicit; error/unknown are not no-game. Synthetic fixtures never real game claims.",
+      "expected": {
+        "schedule": {
+          "start_date": "2026-10-10",
+          "end_date": "2026-10-16",
+          "upcoming_only": false,
+          "status": "all",
+          "availability": "unknown",
+          "stale": true,
+          "total_count": 0,
+          "has_more": false,
+          "offset": 0
+        },
+        "notices": [
+          "unconfirmed"
+        ],
+        "strict_future": false
+      }
+    },
+    {
+      "id": "schedule-error",
+      "family": "schedule-error",
+      "input": "조회 오류면 경기 없다고 하지 마",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "schedule-error",
+          "tool": "get_games",
+          "data": {
+            "start_date": "2026-10-10",
+            "end_date": "2026-10-16",
+            "upcoming_only": false,
+            "status": "all",
+            "availability": "error",
+            "stale": false,
+            "total_count": 0,
+            "has_more": false,
+            "offset": 0,
+            "games": [],
+            "demo": false
+          }
+        }
+      ],
+      "rubric": "KST fixed clock; all states for today/default7, strictly future scheduled only for next. Range/pagination/freshness explicit; error/unknown are not no-game. Synthetic fixtures never real game claims.",
+      "expected": {
+        "schedule": {
+          "start_date": "2026-10-10",
+          "end_date": "2026-10-16",
+          "upcoming_only": false,
+          "status": "all",
+          "availability": "error",
+          "stale": false,
+          "total_count": 0,
+          "has_more": false,
+          "offset": 0
+        },
+        "notices": [
+          "lookup_failed"
+        ],
+        "strict_future": false
+      }
+    },
+    {
+      "id": "schedule-demo",
+      "family": "schedule-demo",
+      "input": "합성 데모 일정은 실제와 구분해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "schedule-demo",
+          "tool": "get_games",
+          "data": {
+            "start_date": "2026-10-10",
+            "end_date": "2026-10-16",
+            "upcoming_only": false,
+            "status": "all",
+            "availability": "available",
+            "stale": false,
+            "total_count": 3,
+            "has_more": false,
+            "offset": 0,
+            "games": [
+              {
+                "game_date": "2026-10-10",
+                "game_time": "18:00:00",
+                "home_team": "합성 홈 A",
+                "away_team": "합성 원정 B",
+                "status_code": "END"
+              },
+              {
+                "game_date": "2026-10-10",
+                "game_time": "18:01:00",
+                "home_team": "합성 홈 C",
+                "away_team": "합성 원정 D",
+                "status_code": "READY"
+              },
+              {
+                "game_date": "2026-10-10",
+                "game_time": "18:02:00",
+                "home_team": "합성 홈 A",
+                "away_team": "합성 원정 B",
+                "status_code": "CANCEL"
+              }
+            ],
+            "demo": true
+          }
+        }
+      ],
+      "rubric": "KST fixed clock; all states for today/default7, strictly future scheduled only for next. Range/pagination/freshness explicit; error/unknown are not no-game. Synthetic fixtures never real game claims.",
+      "expected": {
+        "schedule": {
+          "start_date": "2026-10-10",
+          "end_date": "2026-10-16",
+          "upcoming_only": false,
+          "status": "all",
+          "availability": "available",
+          "stale": false,
+          "total_count": 3,
+          "has_more": false,
+          "offset": 0
+        },
+        "notices": [
+          "demo"
+        ],
+        "strict_future": false
+      }
+    }
+  ]
+}

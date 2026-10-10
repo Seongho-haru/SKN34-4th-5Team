@@ -1,0 +1,550 @@
+{
+  "schema_version": 1,
+  "group": "delegation",
+  "cases": [
+    {
+      "id": "delegation-direct",
+      "family": "delegation-direct",
+      "input": "저장된 순위 하나만 조회해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "delegation-direct",
+          "tool": "get_standings",
+          "data": {
+            "status": "success",
+            "synthetic_note": "frozen safe observation; not actual provider output"
+          }
+        }
+      ],
+      "rubric": "Direct when exposed; missing primitive narrow delegation; one goal per specialist, no nested delegation, main asks/finalizes. Parallel only independent goals; specialist internal sequence allowed.",
+      "expected": {
+        "required_events": [
+          "get_standings",
+          "final"
+        ],
+        "order": [
+          [
+            "get_standings",
+            "final"
+          ]
+        ],
+        "parallel": [],
+        "exact_tools": [
+          "get_standings"
+        ],
+        "one_goal": true,
+        "main_questions": true,
+        "no_nested": true
+      }
+    },
+    {
+      "id": "delegation-batch",
+      "family": "delegation-batch",
+      "input": "팀 상관없이 이번 주 일정을 한 번에 조회해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "delegation-batch",
+          "tool": "get_games",
+          "data": {
+            "status": "success",
+            "synthetic_note": "frozen safe observation; not actual provider output"
+          }
+        }
+      ],
+      "rubric": "Direct when exposed; missing primitive narrow delegation; one goal per specialist, no nested delegation, main asks/finalizes. Parallel only independent goals; specialist internal sequence allowed.",
+      "expected": {
+        "required_events": [
+          "get_games",
+          "final"
+        ],
+        "order": [
+          [
+            "get_games",
+            "final"
+          ]
+        ],
+        "parallel": [],
+        "exact_tools": [
+          "get_games"
+        ],
+        "one_goal": true,
+        "main_questions": true,
+        "no_nested": true
+      }
+    },
+    {
+      "id": "delegation-short-sequence",
+      "family": "delegation-short-sequence",
+      "input": "잠실 ID 확인 후 교통 조회해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "delegation-short-sequence",
+          "tool": "get_stadium",
+          "data": {
+            "status": "success",
+            "synthetic_note": "frozen safe observation; not actual provider output"
+          }
+        }
+      ],
+      "rubric": "Direct when exposed; missing primitive narrow delegation; one goal per specialist, no nested delegation, main asks/finalizes. Parallel only independent goals; specialist internal sequence allowed.",
+      "expected": {
+        "required_events": [
+          "get_stadium",
+          "get_transport",
+          "final"
+        ],
+        "order": [
+          [
+            "get_stadium",
+            "get_transport"
+          ],
+          [
+            "get_stadium",
+            "final"
+          ],
+          [
+            "get_transport",
+            "final"
+          ]
+        ],
+        "parallel": [],
+        "exact_tools": [
+          "get_stadium",
+          "get_transport"
+        ],
+        "one_goal": true,
+        "main_questions": true,
+        "no_nested": true
+      }
+    },
+    {
+      "id": "delegation-missing-primitive",
+      "family": "delegation-missing-primitive",
+      "input": "일정 도구가 없으면 야구 전문 도구로 일정만 확인해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "delegation-missing-primitive",
+          "tool": "ask_baseball",
+          "data": {
+            "status": "success",
+            "synthetic_note": "frozen safe observation; not actual provider output"
+          }
+        }
+      ],
+      "rubric": "Direct when exposed; missing primitive narrow delegation; one goal per specialist, no nested delegation, main asks/finalizes. Parallel only independent goals; specialist internal sequence allowed.",
+      "expected": {
+        "required_events": [
+          "ask_baseball",
+          "final"
+        ],
+        "order": [
+          [
+            "ask_baseball",
+            "final"
+          ]
+        ],
+        "parallel": [],
+        "exact_tools": [
+          "ask_baseball"
+        ],
+        "one_goal": true,
+        "main_questions": true,
+        "no_nested": true
+      }
+    },
+    {
+      "id": "delegation-candidate-narrow",
+      "family": "delegation-candidate-narrow",
+      "input": "구장 목록 도구가 없으면 구장 후보만 가져와줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "delegation-candidate-narrow",
+          "tool": "ask_baseball",
+          "data": {
+            "status": "success",
+            "synthetic_note": "frozen safe observation; not actual provider output"
+          }
+        }
+      ],
+      "rubric": "Direct when exposed; missing primitive narrow delegation; one goal per specialist, no nested delegation, main asks/finalizes. Parallel only independent goals; specialist internal sequence allowed.",
+      "expected": {
+        "required_events": [
+          "ask_baseball",
+          "final"
+        ],
+        "order": [
+          [
+            "ask_baseball",
+            "final"
+          ]
+        ],
+        "parallel": [],
+        "exact_tools": [
+          "ask_baseball"
+        ],
+        "one_goal": true,
+        "main_questions": true,
+        "no_nested": true
+      }
+    },
+    {
+      "id": "delegation-independent",
+      "family": "delegation-independent",
+      "input": "독립적으로 잠실 교통과 공개 코스 조사해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "delegation-independent",
+          "tool": "ask_baseball",
+          "data": {
+            "status": "success",
+            "synthetic_note": "frozen safe observation; not actual provider output"
+          }
+        }
+      ],
+      "rubric": "Direct when exposed; missing primitive narrow delegation; one goal per specialist, no nested delegation, main asks/finalizes. Parallel only independent goals; specialist internal sequence allowed.",
+      "expected": {
+        "required_events": [
+          "ask_baseball",
+          "ask_place_data",
+          "final"
+        ],
+        "order": [
+          [
+            "ask_baseball",
+            "final"
+          ],
+          [
+            "ask_place_data",
+            "final"
+          ]
+        ],
+        "parallel": [
+          [
+            "ask_baseball",
+            "ask_place_data"
+          ]
+        ],
+        "exact_tools": [
+          "ask_baseball",
+          "ask_place_data"
+        ],
+        "one_goal": true,
+        "main_questions": true,
+        "no_nested": true
+      }
+    },
+    {
+      "id": "delegation-independent-web",
+      "family": "delegation-independent-web",
+      "input": "공개 코스와 별도 웹 공지를 각각 확인해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "delegation-independent-web",
+          "tool": "ask_place_data",
+          "data": {
+            "status": "success",
+            "synthetic_note": "frozen safe observation; not actual provider output"
+          }
+        }
+      ],
+      "rubric": "Direct when exposed; missing primitive narrow delegation; one goal per specialist, no nested delegation, main asks/finalizes. Parallel only independent goals; specialist internal sequence allowed.",
+      "expected": {
+        "required_events": [
+          "ask_place_data",
+          "ask_web_research",
+          "final"
+        ],
+        "order": [
+          [
+            "ask_place_data",
+            "final"
+          ],
+          [
+            "ask_web_research",
+            "final"
+          ]
+        ],
+        "parallel": [
+          [
+            "ask_place_data",
+            "ask_web_research"
+          ]
+        ],
+        "exact_tools": [
+          "ask_place_data",
+          "ask_web_research"
+        ],
+        "one_goal": true,
+        "main_questions": true,
+        "no_nested": true
+      }
+    },
+    {
+      "id": "delegation-dependent",
+      "family": "delegation-dependent",
+      "input": "구장 확인 결과를 바탕으로 주변 후보 조사해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "delegation-dependent",
+          "tool": "ask_baseball",
+          "data": {
+            "status": "success",
+            "synthetic_note": "frozen safe observation; not actual provider output"
+          }
+        }
+      ],
+      "rubric": "Direct when exposed; missing primitive narrow delegation; one goal per specialist, no nested delegation, main asks/finalizes. Parallel only independent goals; specialist internal sequence allowed.",
+      "expected": {
+        "required_events": [
+          "ask_baseball",
+          "ask_travel_research",
+          "final"
+        ],
+        "order": [
+          [
+            "ask_baseball",
+            "ask_travel_research"
+          ],
+          [
+            "ask_baseball",
+            "final"
+          ],
+          [
+            "ask_travel_research",
+            "final"
+          ]
+        ],
+        "parallel": [],
+        "exact_tools": [
+          "ask_baseball",
+          "ask_travel_research"
+        ],
+        "one_goal": true,
+        "main_questions": true,
+        "no_nested": true
+      }
+    },
+    {
+      "id": "delegation-internal-sequence",
+      "family": "delegation-internal-sequence",
+      "input": "전문 에이전트에서 구장 ID와 좌석을 순서대로 확인해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "delegation-internal-sequence",
+          "tool": "ask_baseball",
+          "data": {
+            "status": "success",
+            "synthetic_note": "frozen safe observation; not actual provider output"
+          }
+        }
+      ],
+      "rubric": "Direct when exposed; missing primitive narrow delegation; one goal per specialist, no nested delegation, main asks/finalizes. Parallel only independent goals; specialist internal sequence allowed.",
+      "expected": {
+        "required_events": [
+          "ask_baseball",
+          "final"
+        ],
+        "order": [
+          [
+            "ask_baseball",
+            "final"
+          ]
+        ],
+        "parallel": [],
+        "exact_tools": [
+          "ask_baseball"
+        ],
+        "one_goal": true,
+        "main_questions": true,
+        "no_nested": true
+      }
+    },
+    {
+      "id": "delegation-main-question",
+      "family": "delegation-main-question",
+      "input": "전문 도구가 확인한 후보로 메인이 질문해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "delegation-main-question",
+          "tool": "ask_baseball",
+          "data": {
+            "status": "success",
+            "synthetic_note": "frozen safe observation; not actual provider output"
+          }
+        }
+      ],
+      "rubric": "Direct when exposed; missing primitive narrow delegation; one goal per specialist, no nested delegation, main asks/finalizes. Parallel only independent goals; specialist internal sequence allowed.",
+      "expected": {
+        "required_events": [
+          "ask_baseball",
+          "present_planning_questions",
+          "final"
+        ],
+        "order": [
+          [
+            "ask_baseball",
+            "present_planning_questions"
+          ],
+          [
+            "ask_baseball",
+            "final"
+          ],
+          [
+            "present_planning_questions",
+            "final"
+          ]
+        ],
+        "parallel": [],
+        "exact_tools": [
+          "ask_baseball",
+          "present_planning_questions"
+        ],
+        "one_goal": true,
+        "main_questions": true,
+        "no_nested": true
+      }
+    },
+    {
+      "id": "delegation-course-priority",
+      "family": "delegation-course-priority",
+      "input": "잠실 코스에 후기 좋은 카페 넣어줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "delegation-course-priority",
+          "tool": "ask_course",
+          "data": {
+            "status": "success",
+            "synthetic_note": "frozen safe observation; not actual provider output"
+          }
+        }
+      ],
+      "rubric": "Direct when exposed; missing primitive narrow delegation; one goal per specialist, no nested delegation, main asks/finalizes. Parallel only independent goals; specialist internal sequence allowed.",
+      "expected": {
+        "required_events": [
+          "ask_course",
+          "final"
+        ],
+        "order": [
+          [
+            "ask_course",
+            "final"
+          ]
+        ],
+        "parallel": [],
+        "exact_tools": [
+          "ask_course"
+        ],
+        "one_goal": true,
+        "main_questions": true,
+        "no_nested": true
+      }
+    },
+    {
+      "id": "delegation-attachment",
+      "family": "delegation-attachment",
+      "input": "첨부 원문부터 읽고 요약해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "delegation-attachment",
+          "tool": "jev_read_body",
+          "data": {
+            "status": "success",
+            "synthetic_note": "frozen safe observation; not actual provider output"
+          }
+        }
+      ],
+      "rubric": "Direct when exposed; missing primitive narrow delegation; one goal per specialist, no nested delegation, main asks/finalizes. Parallel only independent goals; specialist internal sequence allowed.",
+      "expected": {
+        "required_events": [
+          "jev_read_body",
+          "final"
+        ],
+        "order": [
+          [
+            "jev_read_body",
+            "final"
+          ]
+        ],
+        "parallel": [],
+        "exact_tools": [
+          "jev_read_body"
+        ],
+        "one_goal": true,
+        "main_questions": true,
+        "no_nested": true
+      }
+    }
+  ]
+}

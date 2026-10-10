@@ -1,0 +1,564 @@
+{
+  "schema_version": 1,
+  "group": "final_answer",
+  "cases": [
+    {
+      "id": "final_answer-date",
+      "family": "final_answer-date",
+      "input": "경기 날짜를 출처대로 안내해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "answer-date",
+          "tool": "get_games",
+          "data": {
+            "supported_claims": [
+              {
+                "evidence_id": "answer-date",
+                "date": "2026-10-10",
+                "home": "합성 홈 A",
+                "away": "합성 원정 B",
+                "status": "scheduled",
+                "figure": null,
+                "source_url": "https://example.invalid/evidence/answer-date",
+                "demo": true
+              }
+            ],
+            "status": "success"
+          }
+        }
+      ],
+      "rubric": "Claim tuples are evidence-associated structured extraction, NOT proof of prose truth. Human review must check unsupported additions/omissions, dates, teams, statuses, source links, uncertainty and demo-vs-real wording.",
+      "expected": {
+        "claims": [
+          {
+            "evidence_id": "answer-date",
+            "date": "2026-10-10",
+            "home": "합성 홈 A",
+            "away": "합성 원정 B",
+            "status": "scheduled",
+            "figure": null,
+            "source_url": "https://example.invalid/evidence/answer-date",
+            "demo": true
+          }
+        ],
+        "notices": [
+          "demo"
+        ]
+      }
+    },
+    {
+      "id": "final_answer-teams",
+      "family": "final_answer-teams",
+      "input": "홈과 원정 팀을 바꾸지 마",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "answer-teams",
+          "tool": "get_games",
+          "data": {
+            "supported_claims": [
+              {
+                "evidence_id": "answer-teams",
+                "date": "2026-10-10",
+                "home": "합성 홈 A",
+                "away": "합성 원정 B",
+                "status": "scheduled",
+                "figure": null,
+                "source_url": "https://example.invalid/evidence/answer-teams",
+                "demo": true
+              }
+            ],
+            "status": "success"
+          }
+        }
+      ],
+      "rubric": "Claim tuples are evidence-associated structured extraction, NOT proof of prose truth. Human review must check unsupported additions/omissions, dates, teams, statuses, source links, uncertainty and demo-vs-real wording.",
+      "expected": {
+        "claims": [
+          {
+            "evidence_id": "answer-teams",
+            "date": "2026-10-10",
+            "home": "합성 홈 A",
+            "away": "합성 원정 B",
+            "status": "scheduled",
+            "figure": null,
+            "source_url": "https://example.invalid/evidence/answer-teams",
+            "demo": true
+          }
+        ],
+        "notices": [
+          "demo"
+        ]
+      }
+    },
+    {
+      "id": "final_answer-status",
+      "family": "final_answer-status",
+      "input": "취소 경기는 예정으로 말하지 마",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "answer-status",
+          "tool": "get_games",
+          "data": {
+            "supported_claims": [
+              {
+                "evidence_id": "answer-status",
+                "date": "2026-10-10",
+                "home": "합성 홈 A",
+                "away": "합성 원정 B",
+                "status": "canceled",
+                "figure": null,
+                "source_url": "https://example.invalid/evidence/answer-status",
+                "demo": true
+              }
+            ],
+            "status": "success"
+          }
+        }
+      ],
+      "rubric": "Claim tuples are evidence-associated structured extraction, NOT proof of prose truth. Human review must check unsupported additions/omissions, dates, teams, statuses, source links, uncertainty and demo-vs-real wording.",
+      "expected": {
+        "claims": [
+          {
+            "evidence_id": "answer-status",
+            "date": "2026-10-10",
+            "home": "합성 홈 A",
+            "away": "합성 원정 B",
+            "status": "canceled",
+            "figure": null,
+            "source_url": "https://example.invalid/evidence/answer-status",
+            "demo": true
+          }
+        ],
+        "notices": [
+          "demo"
+        ]
+      }
+    },
+    {
+      "id": "final_answer-score",
+      "family": "final_answer-score",
+      "input": "확인된 점수만 안내해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "answer-score",
+          "tool": "get_games",
+          "data": {
+            "supported_claims": [
+              {
+                "evidence_id": "answer-score",
+                "date": "2026-10-10",
+                "home": "합성 홈 A",
+                "away": "합성 원정 B",
+                "status": "scheduled",
+                "figure": "2:1",
+                "source_url": "https://example.invalid/evidence/answer-score",
+                "demo": true
+              }
+            ],
+            "status": "success"
+          }
+        }
+      ],
+      "rubric": "Claim tuples are evidence-associated structured extraction, NOT proof of prose truth. Human review must check unsupported additions/omissions, dates, teams, statuses, source links, uncertainty and demo-vs-real wording.",
+      "expected": {
+        "claims": [
+          {
+            "evidence_id": "answer-score",
+            "date": "2026-10-10",
+            "home": "합성 홈 A",
+            "away": "합성 원정 B",
+            "status": "scheduled",
+            "figure": "2:1",
+            "source_url": "https://example.invalid/evidence/answer-score",
+            "demo": true
+          }
+        ],
+        "notices": [
+          "demo"
+        ]
+      }
+    },
+    {
+      "id": "final_answer-link",
+      "family": "final_answer-link",
+      "input": "각 경기의 실제 관찰 출처를 인용해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "answer-link",
+          "tool": "get_games",
+          "data": {
+            "supported_claims": [
+              {
+                "evidence_id": "answer-link",
+                "date": "2026-10-10",
+                "home": "합성 홈 A",
+                "away": "합성 원정 B",
+                "status": "scheduled",
+                "figure": null,
+                "source_url": "https://example.invalid/evidence/answer-link",
+                "demo": true
+              }
+            ],
+            "status": "success"
+          }
+        }
+      ],
+      "rubric": "Claim tuples are evidence-associated structured extraction, NOT proof of prose truth. Human review must check unsupported additions/omissions, dates, teams, statuses, source links, uncertainty and demo-vs-real wording.",
+      "expected": {
+        "claims": [
+          {
+            "evidence_id": "answer-link",
+            "date": "2026-10-10",
+            "home": "합성 홈 A",
+            "away": "합성 원정 B",
+            "status": "scheduled",
+            "figure": null,
+            "source_url": "https://example.invalid/evidence/answer-link",
+            "demo": true
+          }
+        ],
+        "notices": [
+          "demo"
+        ]
+      }
+    },
+    {
+      "id": "final_answer-two-games",
+      "family": "final_answer-two-games",
+      "input": "서로 다른 날짜 대진을 연결해서 보여줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "answer-two-games",
+          "tool": "get_games",
+          "data": {
+            "supported_claims": [
+              {
+                "evidence_id": "answer-two-games",
+                "date": "2026-10-10",
+                "home": "합성 홈 A",
+                "away": "합성 원정 B",
+                "status": "scheduled",
+                "figure": null,
+                "source_url": "https://example.invalid/evidence/answer-two-games",
+                "demo": true
+              },
+              {
+                "evidence_id": "answer-two-games",
+                "date": "2026-10-11",
+                "home": "합성 홈 C",
+                "away": "합성 원정 D",
+                "status": "scheduled",
+                "figure": null,
+                "source_url": "https://example.invalid/evidence/answer-two-games",
+                "demo": true
+              }
+            ],
+            "status": "success"
+          }
+        }
+      ],
+      "rubric": "Claim tuples are evidence-associated structured extraction, NOT proof of prose truth. Human review must check unsupported additions/omissions, dates, teams, statuses, source links, uncertainty and demo-vs-real wording.",
+      "expected": {
+        "claims": [
+          {
+            "evidence_id": "answer-two-games",
+            "date": "2026-10-10",
+            "home": "합성 홈 A",
+            "away": "합성 원정 B",
+            "status": "scheduled",
+            "figure": null,
+            "source_url": "https://example.invalid/evidence/answer-two-games",
+            "demo": true
+          },
+          {
+            "evidence_id": "answer-two-games",
+            "date": "2026-10-11",
+            "home": "합성 홈 C",
+            "away": "합성 원정 D",
+            "status": "scheduled",
+            "figure": null,
+            "source_url": "https://example.invalid/evidence/answer-two-games",
+            "demo": true
+          }
+        ],
+        "notices": [
+          "demo"
+        ]
+      }
+    },
+    {
+      "id": "final_answer-no-invented-figure",
+      "family": "final_answer-no-invented-figure",
+      "input": "관찰에 없는 관중 수는 만들지 마",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "answer-no-invented-figure",
+          "tool": "get_games",
+          "data": {
+            "supported_claims": [
+              {
+                "evidence_id": "answer-no-invented-figure",
+                "date": "2026-10-10",
+                "home": "합성 홈 A",
+                "away": "합성 원정 B",
+                "status": "scheduled",
+                "figure": null,
+                "source_url": "https://example.invalid/evidence/answer-no-invented-figure",
+                "demo": true
+              }
+            ],
+            "status": "success"
+          }
+        }
+      ],
+      "rubric": "Claim tuples are evidence-associated structured extraction, NOT proof of prose truth. Human review must check unsupported additions/omissions, dates, teams, statuses, source links, uncertainty and demo-vs-real wording.",
+      "expected": {
+        "claims": [
+          {
+            "evidence_id": "answer-no-invented-figure",
+            "date": "2026-10-10",
+            "home": "합성 홈 A",
+            "away": "합성 원정 B",
+            "status": "scheduled",
+            "figure": null,
+            "source_url": "https://example.invalid/evidence/answer-no-invented-figure",
+            "demo": true
+          }
+        ],
+        "notices": [
+          "demo"
+        ]
+      }
+    },
+    {
+      "id": "final_answer-demo",
+      "family": "final_answer-demo",
+      "input": "데모 결과임을 밝히고 실제로 말하지 마",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "answer-demo",
+          "tool": "get_games",
+          "data": {
+            "supported_claims": [
+              {
+                "evidence_id": "answer-demo",
+                "date": "2026-10-10",
+                "home": "합성 홈 A",
+                "away": "합성 원정 B",
+                "status": "scheduled",
+                "figure": null,
+                "source_url": "https://example.invalid/evidence/answer-demo",
+                "demo": true
+              }
+            ],
+            "status": "success"
+          }
+        }
+      ],
+      "rubric": "Claim tuples are evidence-associated structured extraction, NOT proof of prose truth. Human review must check unsupported additions/omissions, dates, teams, statuses, source links, uncertainty and demo-vs-real wording.",
+      "expected": {
+        "claims": [
+          {
+            "evidence_id": "answer-demo",
+            "date": "2026-10-10",
+            "home": "합성 홈 A",
+            "away": "합성 원정 B",
+            "status": "scheduled",
+            "figure": null,
+            "source_url": "https://example.invalid/evidence/answer-demo",
+            "demo": true
+          }
+        ],
+        "notices": [
+          "demo"
+        ]
+      }
+    },
+    {
+      "id": "final_answer-failure",
+      "family": "final_answer-failure",
+      "input": "실패한 조회는 성공했다고 말하지 마",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "answer-failure",
+          "tool": "get_games",
+          "data": {
+            "supported_claims": [],
+            "status": "error"
+          }
+        }
+      ],
+      "rubric": "Claim tuples are evidence-associated structured extraction, NOT proof of prose truth. Human review must check unsupported additions/omissions, dates, teams, statuses, source links, uncertainty and demo-vs-real wording.",
+      "expected": {
+        "claims": [],
+        "notices": [
+          "demo",
+          "lookup_failed"
+        ]
+      }
+    },
+    {
+      "id": "final_answer-unknown",
+      "family": "final_answer-unknown",
+      "input": "미확인 시각은 불확실하다고 밝혀줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "answer-unknown",
+          "tool": "get_games",
+          "data": {
+            "supported_claims": [],
+            "status": "unknown"
+          }
+        }
+      ],
+      "rubric": "Claim tuples are evidence-associated structured extraction, NOT proof of prose truth. Human review must check unsupported additions/omissions, dates, teams, statuses, source links, uncertainty and demo-vs-real wording.",
+      "expected": {
+        "claims": [],
+        "notices": [
+          "demo",
+          "unconfirmed"
+        ]
+      }
+    },
+    {
+      "id": "final_answer-stale",
+      "family": "final_answer-stale",
+      "input": "저장 결과의 최신성 경고를 붙여줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "answer-stale",
+          "tool": "get_games",
+          "data": {
+            "supported_claims": [
+              {
+                "evidence_id": "answer-stale",
+                "date": "2026-10-10",
+                "home": "합성 홈 A",
+                "away": "합성 원정 B",
+                "status": "scheduled",
+                "figure": null,
+                "source_url": "https://example.invalid/evidence/answer-stale",
+                "demo": true
+              }
+            ],
+            "status": "success"
+          }
+        }
+      ],
+      "rubric": "Claim tuples are evidence-associated structured extraction, NOT proof of prose truth. Human review must check unsupported additions/omissions, dates, teams, statuses, source links, uncertainty and demo-vs-real wording.",
+      "expected": {
+        "claims": [
+          {
+            "evidence_id": "answer-stale",
+            "date": "2026-10-10",
+            "home": "합성 홈 A",
+            "away": "합성 원정 B",
+            "status": "scheduled",
+            "figure": null,
+            "source_url": "https://example.invalid/evidence/answer-stale",
+            "demo": true
+          }
+        ],
+        "notices": [
+          "demo",
+          "stale_saved"
+        ]
+      }
+    },
+    {
+      "id": "final_answer-conflict",
+      "family": "final_answer-conflict",
+      "input": "서로 충돌하는 자료는 확정하지 마",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [
+        {
+          "evidence_id": "answer-conflict",
+          "tool": "get_games",
+          "data": {
+            "supported_claims": [],
+            "status": "unknown"
+          }
+        }
+      ],
+      "rubric": "Claim tuples are evidence-associated structured extraction, NOT proof of prose truth. Human review must check unsupported additions/omissions, dates, teams, statuses, source links, uncertainty and demo-vs-real wording.",
+      "expected": {
+        "claims": [],
+        "notices": [
+          "demo",
+          "conflicting_sources"
+        ]
+      }
+    }
+  ]
+}

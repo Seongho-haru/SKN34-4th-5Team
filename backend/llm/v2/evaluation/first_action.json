@@ -1,0 +1,318 @@
+{
+  "schema_version": 1,
+  "group": "first_action",
+  "cases": [
+    {
+      "id": "first_action-exact-schedule",
+      "family": "schedule-unspecified",
+      "input": "경기일정 조회 해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [],
+      "rubric": "Independent first-call oracle; prerequisite subset or no call, not classifier quality.",
+      "expected": {
+        "allowed_first": [
+          "get_games"
+        ],
+        "no_call": false
+      },
+      "decision": {
+        "guard": "PASS",
+        "capabilities": [
+          "schedule"
+        ],
+        "course_request": "NONE"
+      }
+    },
+    {
+      "id": "first_action-exact-nearby",
+      "family": "nearby-unresolved",
+      "input": "음 그냥 가고싶은데 주변에서 뭘해야해?",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [],
+      "rubric": "Independent first-call oracle; prerequisite subset or no call, not classifier quality.",
+      "expected": {
+        "allowed_first": [
+          "ask_baseball"
+        ],
+        "no_call": false
+      },
+      "decision": {
+        "guard": "PASS",
+        "capabilities": [],
+        "course_request": "NONE"
+      }
+    },
+    {
+      "id": "first_action-schedule-paraphrase",
+      "family": "schedule-unspecified",
+      "input": "팀은 상관없고 야구 일정 보여줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [],
+      "rubric": "Independent first-call oracle; prerequisite subset or no call, not classifier quality.",
+      "expected": {
+        "allowed_first": [
+          "get_games"
+        ],
+        "no_call": false
+      },
+      "decision": {
+        "guard": "PASS",
+        "capabilities": [
+          "schedule"
+        ],
+        "course_request": "NONE"
+      }
+    },
+    {
+      "id": "first_action-nearby-paraphrase",
+      "family": "nearby-unresolved",
+      "input": "야구장 주변에 가고 싶은데 어디인지 아직 못 정했어",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [],
+      "rubric": "Independent first-call oracle; prerequisite subset or no call, not classifier quality.",
+      "expected": {
+        "allowed_first": [
+          "ask_baseball"
+        ],
+        "no_call": false
+      },
+      "decision": {
+        "guard": "PASS",
+        "capabilities": [],
+        "course_request": "NONE"
+      }
+    },
+    {
+      "id": "first_action-greeting",
+      "family": "first_action-greeting",
+      "input": "안녕 야구 보러 왔어",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [],
+      "rubric": "Independent first-call oracle; prerequisite subset or no call, not classifier quality.",
+      "expected": {
+        "allowed_first": [],
+        "no_call": true
+      },
+      "decision": {
+        "guard": "PASS",
+        "capabilities": [],
+        "course_request": "NONE"
+      }
+    },
+    {
+      "id": "first_action-thanks",
+      "family": "first_action-thanks",
+      "input": "고마워 도움이 됐어",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [],
+      "rubric": "Independent first-call oracle; prerequisite subset or no call, not classifier quality.",
+      "expected": {
+        "allowed_first": [],
+        "no_call": true
+      },
+      "decision": {
+        "guard": "PASS",
+        "capabilities": [],
+        "course_request": "NONE"
+      }
+    },
+    {
+      "id": "first_action-standings",
+      "family": "first_action-standings",
+      "input": "현재 저장된 순위를 보여줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [],
+      "rubric": "Independent first-call oracle; prerequisite subset or no call, not classifier quality.",
+      "expected": {
+        "allowed_first": [
+          "get_standings"
+        ],
+        "no_call": false
+      },
+      "decision": {
+        "guard": "PASS",
+        "capabilities": [
+          "standings"
+        ],
+        "course_request": "NONE"
+      }
+    },
+    {
+      "id": "first_action-player",
+      "family": "first_action-player",
+      "input": "LG 김현수 선수 기록 찾아줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [],
+      "rubric": "Independent first-call oracle; prerequisite subset or no call, not classifier quality.",
+      "expected": {
+        "allowed_first": [
+          "search_players"
+        ],
+        "no_call": false
+      },
+      "decision": {
+        "guard": "PASS",
+        "capabilities": [
+          "players"
+        ],
+        "course_request": "NONE"
+      }
+    },
+    {
+      "id": "first_action-stadium-list",
+      "family": "first_action-stadium-list",
+      "input": "구장 목록을 보여줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [],
+      "rubric": "Independent first-call oracle; prerequisite subset or no call, not classifier quality.",
+      "expected": {
+        "allowed_first": [
+          "get_stadiums"
+        ],
+        "no_call": false
+      },
+      "decision": {
+        "guard": "PASS",
+        "capabilities": [
+          "stadium_info"
+        ],
+        "course_request": "NONE"
+      }
+    },
+    {
+      "id": "first_action-course-known",
+      "family": "first_action-course-known",
+      "input": "잠실 직관 코스 짜줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {
+        "stadium": "JAMSIL"
+      },
+      "observations": [],
+      "rubric": "Independent first-call oracle; prerequisite subset or no call, not classifier quality.",
+      "expected": {
+        "allowed_first": [
+          "ask_course"
+        ],
+        "no_call": false
+      },
+      "decision": {
+        "guard": "PASS",
+        "capabilities": [
+          "day_plan"
+        ],
+        "course_request": "NEW"
+      }
+    },
+    {
+      "id": "first_action-course-edit",
+      "family": "first_action-course-edit",
+      "input": "현재 코스에서 카페만 빼줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {
+        "stadium": "JAMSIL",
+        "currentCourse": {
+          "places": [
+            {
+              "name": "합성 카페",
+              "visitId": "v1"
+            }
+          ]
+        }
+      },
+      "observations": [],
+      "rubric": "Independent first-call oracle; prerequisite subset or no call, not classifier quality.",
+      "expected": {
+        "allowed_first": [
+          "ask_course"
+        ],
+        "no_call": false
+      },
+      "decision": {
+        "guard": "PASS",
+        "capabilities": [
+          "day_plan"
+        ],
+        "course_request": "EDIT"
+      }
+    },
+    {
+      "id": "first_action-seat-prerequisite",
+      "family": "first_action-seat-prerequisite",
+      "input": "잠실 좌석 시야 확인해줘",
+      "provenance": "hand-authored",
+      "review_status": "author-reviewed",
+      "synthetic": true,
+      "as_of": "2026-10-10T18:00:00+09:00",
+      "timezone": "Asia/Seoul",
+      "context": {},
+      "observations": [],
+      "rubric": "Independent first-call oracle; prerequisite subset or no call, not classifier quality.",
+      "expected": {
+        "allowed_first": [
+          "get_stadium"
+        ],
+        "no_call": false
+      },
+      "decision": {
+        "guard": "PASS",
+        "capabilities": [
+          "stadium_info"
+        ],
+        "course_request": "NONE"
+      }
+    }
+  ]
+}
