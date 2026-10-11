@@ -90,6 +90,7 @@ class ChatAttachment(models.Model):
     height = models.PositiveIntegerField(null=True)
     source_url = models.URLField(max_length=2048, blank=True)
     extracted_text = models.TextField(blank=True)  # URL 캐시만. 파일은 private storage 에서 읽는다
+    url_read_result = models.JSONField(default=dict, blank=True)  # 실패/부분 관찰 보존; 새 첨부만 재조회
     created_at = models.DateTimeField(auto_now_add=True)
 
 

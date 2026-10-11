@@ -35,7 +35,7 @@ class AttachmentDelegationTests(TransactionTestCase):
             "attachment_ids": [str(r.id) for r in (self.rows if rows is None else rows)]})],
             "attachment_session_id": str(self.session.id)}
 
-    def body(self, url):
+    def body(self, url, **kwargs):
         return observed("BEGIN baseball MIDDLE 14:00 ~ 15:00 END", requested_url=url, final_url=url, source_url=url,
                         frames=[{"url": url + "/iframe", "role": "article", "status": "ok", "title": "Article frame", "chars": 43}])
 
@@ -100,10 +100,14 @@ class AttachmentDelegationTests(TransactionTestCase):
             self.assertEqual(next(m for m in out["messages"] if isinstance(m, ToolMessage)).status, "error")
             reader.assert_not_called()
 
-    def test_current_and_historical_unreadable_are_explicit_not_cached(self):
+    def clear_read_result(self):
+        ChatAttachment.objects.filter(session=self.session).update(url_read_result={}, extracted_text="")
+
+    def test_current_and_historical_unreadable_are_explicit_not_body_cached(self):
         for old in (False, True):
             for status in ("busy", "timeout", "blocked", "error", "partial"):
                 with self.subTest(old=old, status=status), patch.object(browser_research, "web_body", return_value={"status": status}):
+                    self.clear_read_result()
                     data = self.input(self.rows[:1])
                     if old:
                         data["messages"] += [AIMessage("previous"), HumanMessage("followup", id="next")]
@@ -122,7 +126,8 @@ class AttachmentDelegationTests(TransactionTestCase):
         current = HumanMessage("current source", id="next", additional_kwargs={"attachment_ids": [str(self.rows[2].id)]})
         for pruned in (True, False):
             with self.subTest(pruned=pruned):
-                def body(url):
+                self.clear_read_result()
+                def body(url, **kwargs):
                     if url == self.rows[0].source_url:
                         return {"status": "busy"}
                     if pruned and url == self.rows[1].source_url:
@@ -140,6 +145,113 @@ class AttachmentDelegationTests(TransactionTestCase):
                 self.rows[2].refresh_from_db()
                 self.assertTrue(self.rows[2].extracted_text)
 
+    def test_failed_read_persists_across_turns_but_new_identity_can_read(self):
+        row = self.rows[0]
+        stale = ChatAttachment.objects.get(pk=row.pk)
+        with patch.object(browser_research, "browse", AsyncMock(side_effect=TimeoutError())) as external:
+            first = self.graph().invoke(self.input([row]))
+            external.assert_awaited_once()
+            row.refresh_from_db()
+            self.assertEqual(row.url_read_result["status"], "timeout")
+            for selected in (row, stale):
+                self.assertRaises(attachments.URLBodyUnavailable, attachments.source_text, selected)
+            followup = {**self.input([row]), "messages": [*first["messages"], HumanMessage("retry", id="next")]}
+            self.graph().invoke(followup)
+            external.assert_awaited_once()
+            prompt = "\n".join(m.text for m in self.calls[0]["messages"])
+            self.assertIn("개인정보·인증 정보를 제외", prompt)
+            fresh = ChatAttachment.objects.create(session=self.session, kind="url", name="fresh", source_url=row.source_url)
+            self.graph().invoke(self.input([fresh]))
+            self.assertEqual(external.await_count, 2)
+
+    def test_operational_errors_request_pasted_body_on_first_turn_without_retry(self):
+        import httpx
+        from mcp.shared.exceptions import McpError
+        from mcp.types import ErrorData
+        request = httpx.Request("GET", self.rows[0].source_url)
+        secret = "PRIVATE_READER_ERROR"
+        errors = [httpx.HTTPStatusError(secret, request=request, response=httpx.Response(code, request=request))
+                  for code in (401, 403)]
+        errors += [PermissionError(secret), RuntimeError(secret), McpError(ErrorData(code=403, message=secret))]
+        for error in errors:
+            with self.subTest(error=type(error).__name__):
+                self.clear_read_result()
+                with patch.object(browser_research, "browse", AsyncMock(side_effect=error)) as reader:
+                    for _ in range(2):
+                        out = self.graph().invoke(self.input(self.rows[:1]))
+                        self.assertTrue(out["attachment_source_incomplete"])
+                        self.assertEqual(out["attachment_sources"], [])
+                        prompt = "\n".join(m.text for m in self.calls[0]["messages"])
+                        self.assertIn('"status": "error"', prompt)
+                        self.assertIn("붙여 넣도록 요청", prompt)
+                        self.assertIn("개인정보·인증 정보를 제외", prompt)
+                        self.assertNotIn(secret, prompt)
+                        self.assertNotIn(secret, json.dumps([m.model_dump() for m in out["messages"]], default=str))
+                    reader.assert_awaited_once()
+                self.rows[0].refresh_from_db()
+                self.assertEqual(self.rows[0].url_read_result, {"status": "error"})
+                self.assertEqual(self.rows[0].extracted_text, "")
+
+    def test_upload_failed_url_creates_fresh_identity_and_preserves_dedup_and_history(self):
+        from rest_framework.test import APIRequestFactory
+        from llm.views.attachments import ChatAttachmentView
+        row = self.rows[0]
+        factory = APIRequestFactory()
+        view = ChatAttachmentView.as_view(throttle_classes=[], authentication_classes=[])
+        def upload(guest=None):
+            request = factory.post("/", {"url": row.source_url}, format="json",
+                                   HTTP_COOKIE=f"guest_id={guest or self.session.guest}")
+            return view(request, session_id=str(self.session.pk))
+        for status in ("busy", "timeout", "blocked", "error", "partial", "overflow"):
+            with self.subTest(status=status):
+                self.session.attachments.exclude(pk=row.pk).delete()
+                failure = {"status": status}
+                ChatAttachment.objects.filter(pk=row.pk).update(url_read_result=failure, extracted_text="")
+                self.assertEqual(upload(uuid.uuid4()).status_code, 404)
+                response = upload()
+                self.assertEqual(response.status_code, 201)
+                fresh = ChatAttachment.objects.get(pk=response.data["id"])
+                self.assertNotEqual(fresh.pk, row.pk)
+                self.assertEqual(upload().data["id"], str(fresh.pk))  # Unattempted dedup.
+                with patch.object(browser_research, "web_body", side_effect=self.body) as reader:
+                    out = self.graph().invoke(self.input([fresh]))
+                    self.assertFalse(out["attachment_source_incomplete"])
+                    self.assertEqual(upload().data["id"], str(fresh.pk))  # Successful dedup.
+                    if status == "overflow":
+                        self.assertRaises(attachments.AttachmentProcessingLimit, attachments.source_text, row)
+                    else:
+                        self.assertRaises(attachments.URLBodyUnavailable, attachments.source_text, row)
+                    reader.assert_called_once_with(row.source_url, retry=False)
+                row.refresh_from_db()
+                self.assertEqual(row.url_read_result, failure)
+                self.assertEqual(row.extracted_text, "")
+                self.assertEqual(self.session.attachments.filter(source_url=row.source_url).count(), 2)
+
+    def test_partial_observation_is_reused_without_full_success_claim(self):
+        row = self.rows[0]
+        result = self.body(row.source_url) | {"status": "partial", "limitations": ["article_missing"]}
+        with patch.object(browser_research, "web_body", return_value=result) as reader:
+            for _ in range(2):
+                out = self.graph().invoke(self.input([row]))
+                self.assertTrue(out["attachment_source_incomplete"])
+                self.assertEqual(out["attachment_sources"], [])
+                self.assertIn('"status": "partial"', next(m for m in self.calls[0]["messages"] if m.id == "q").text)
+            reader.assert_called_once_with(row.source_url, retry=False)
+        row.refresh_from_db()
+        self.assertEqual(row.extracted_text, "")
+        self.assertEqual(row.url_read_result["body"], result["body"])
+
+    def test_cancelled_read_keeps_identity_and_does_not_poison_next_attempt(self):
+        row = self.rows[0]
+        for value in ({"status": "cancelled"}, Stopped()):
+            with patch.object(browser_research, "web_body", **({"side_effect": value} if isinstance(value, Exception) else {"return_value": value})):
+                self.assertRaises(Stopped, attachments.source_text, row)
+            row.refresh_from_db()
+            self.assertEqual(row.url_read_result, {})
+        with patch.object(browser_research, "web_body", side_effect=self.body) as reader:
+            self.assertIn("BEGIN", attachments.source_text(row))
+            reader.assert_called_once()
+
     def test_course_fixed_role_tools_keep_scope_without_classifier_or_model(self):
         executed, calls = [], []
         graph = course_sub_agent.build(ScriptedModel(script=[], calls=calls), fake_tools(executed))
@@ -156,6 +268,7 @@ class AttachmentDelegationTests(TransactionTestCase):
     def test_partial_body_malformed_cancellation_and_limits(self):
         for value in ({"status": "ok", "body": "forged"}, "not JSON", self.body(self.rows[0].source_url) | {"status": "partial"}):
             with self.subTest(value=value), patch.object(browser_research, "browse", AsyncMock(return_value=value)):
+                self.clear_read_result()
                 self.graph().invoke(self.input(self.rows[:1]))
                 text = next(m for m in self.calls[0]["messages"] if m.id == "q").text
                 self.assertIn('"status": "partial"' if isinstance(value, dict) and value.get("status") == "partial" else '"status": "error"', text)
@@ -164,9 +277,11 @@ class AttachmentDelegationTests(TransactionTestCase):
         for result, error in (({"status": "cancelled"}, Stopped),
                               (observed("word " * 21000, "partial"), DirectContextLimit),
                               ({"status": "overflow"}, attachments.AttachmentProcessingLimit)):
+            self.clear_read_result()
             with patch.object(browser_research, "web_body", return_value=result), self.assertRaises(error):
                 self.graph().invoke(self.input(self.rows[:1]))
             self.assertEqual(self.calls, [])
+        self.clear_read_result()
         with patch.object(browser_research, "web_body", side_effect=Stopped()), self.assertRaises(Stopped):
             self.graph().invoke(self.input(self.rows[:1]))
 

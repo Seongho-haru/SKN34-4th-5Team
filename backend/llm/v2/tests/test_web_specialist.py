@@ -192,24 +192,37 @@ class URLContextTests(TransactionTestCase):
         malformed = {"source_url": 123, "frames": {}, "limitations": {}, "requested_url": {},
                      "final_url": [], "title": {}, "extractor_version": [], "collected_at": [], "schema_version": []}
         for key, value in malformed.items():
-            with self.subTest(key=key), patch.object(browser_research, "browse", AsyncMock(return_value=observed("DO_NOT_CACHE", **{key: value}))):
+            ChatAttachment.objects.filter(pk=self.row.pk).update(url_read_result={})
+            with self.subTest(key=key), patch.object(browser_research, "browse", AsyncMock(return_value=observed("DO_NOT_CACHE", **{key: value}))) as reader:
                 context = self.invoke()
+                reader.assert_awaited_once()
                 self.assertIn('"status": "error"', context)
                 self.assertNotIn("DO_NOT_CACHE", context)
             self.row.refresh_from_db()
             self.assertEqual(self.row.extracted_text, "")
 
-    def test_transport_recovers_but_programming_security_and_stop_propagate(self):
+    def test_reader_errors_recover_but_security_and_stop_propagate(self):
         import httpx
         import anyio
         from llm.service.chat_runs import Stopped
         for error, status in ((TimeoutError(), "timeout"), (httpx.ConnectError("fixture"), "error"),
-                              (ExceptionGroup("nested", [anyio.EndOfStream()]), "error")):
+                              (ExceptionGroup("nested", [anyio.EndOfStream()]), "error"),
+                              (RuntimeError("programmer"), "error"),
+                              (ExceptionGroup("mixed", [TimeoutError(), ValueError("bug")]), "error")):
+            ChatAttachment.objects.filter(pk=self.row.pk).update(url_read_result={})
             with patch.object(browser_research, "browse", AsyncMock(side_effect=error)):
                 self.assertIn(f'"status": "{status}"', self.invoke())
-        for error in (RuntimeError("programmer"), Stopped(), ExceptionGroup("mixed", [TimeoutError(), ValueError("bug")])):
+        for error in (Stopped(), ExceptionGroup("nested stopped", [Stopped()])):
+            ChatAttachment.objects.filter(pk=self.row.pk).update(url_read_result={})
             with patch.object(browser_research, "browse", AsyncMock(side_effect=error)):
                 self.assertRaises(type(error), self.invoke)
+        from rest_framework.exceptions import ValidationError
+        for error in (ValidationError("unsafe"), ExceptionGroup("unsafe evidence", [ValidationError("unsafe")])):
+            with patch.object(browser_research, "web_body", side_effect=error):
+                self.assertRaises(type(error), self.invoke)
+            self.row.refresh_from_db()
+            self.assertEqual(self.row.url_read_result, {})
+        ChatAttachment.objects.filter(pk=self.row.pk).update(url_read_result={})
         with patch.object(browser_research, "browse", AsyncMock(return_value=observed("private", source_url="http://127.0.0.1/"))):
             from rest_framework.exceptions import ValidationError
             self.assertRaises(ValidationError, self.invoke)
@@ -228,7 +241,7 @@ class URLContextTests(TransactionTestCase):
         messages = [HumanMessage("고척", id="old", additional_kwargs={"attachment_ids": [str(old.id)]}),
                     AIMessage("previous failure"), HumanMessage("현재 잠실 파오파오 휴게시간?", id="current",
                     additional_kwargs={"attachment_ids": [str(self.row.id)]})]
-        def read(url):
+        def read(url, **kwargs):
             if url == old.source_url:
                 return {"status": "busy"}
             return observed("파오파오 휴게시간 14:00 ~ 15:00", "partial", limitations=["material_article_frame_missing"])
@@ -248,22 +261,26 @@ class URLContextTests(TransactionTestCase):
     def test_failed_cancelled_and_overflow_never_cache_body(self):
         from llm.v2.middleware.attachment_context import DirectContextLimit
         for status in ("blocked", "partial", "busy", "timeout", "error"):
+            ChatAttachment.objects.filter(pk=self.row.pk).update(url_read_result={})
             with patch.object(browser_research, "web_body", return_value={"status": status}) as fetch:
                 for _ in range(2):
                     context = self.invoke()
                     self.assertIn('"available_body": false', context)
                     self.assertIn(f'"status": "{status}"', context)
                     self.assertNotIn("fabricated", context)
-                self.assertEqual(fetch.call_count, 2)
+                self.assertEqual(fetch.call_count, 1)
             self.row.refresh_from_db()
             self.assertEqual(self.row.extracted_text, "")
         for result, error in (({"status": "overflow"}, attachments.AttachmentProcessingLimit),
                               (observed("word " * 21000, "partial"), DirectContextLimit)):
+            ChatAttachment.objects.filter(pk=self.row.pk).update(url_read_result={})
             with patch.object(browser_research, "web_body", return_value=result), self.assertRaises(error):
                 self.invoke()
             self.row.refresh_from_db()
             self.assertEqual(self.row.extracted_text, "")
-        with patch.object(browser_research, "web_body", side_effect=RuntimeError("cancelled")), self.assertRaises(RuntimeError):
+        ChatAttachment.objects.filter(pk=self.row.pk).update(url_read_result={})
+        from llm.service.chat_runs import Stopped
+        with patch.object(browser_research, "web_body", side_effect=Stopped()), self.assertRaises(Stopped):
             self.invoke()
         self.row.refresh_from_db()
         self.assertEqual(self.row.extracted_text, "")

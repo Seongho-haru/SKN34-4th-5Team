@@ -30,7 +30,7 @@ class AttachmentProcessingLimit(ValueError):
 
 
 class URLBodyUnavailable(ValueError):
-    """Expected browser extraction refusal, not source text or a cached failure."""
+    """Expected browser extraction refusal, never source text."""
 
     def __init__(self, status):
         self.status = status
@@ -179,7 +179,7 @@ class URLPageAnalysis(str):
 
 
 class URLObservedBody(str):
-    """Original DOM evidence with transient provenance; failures are never cached."""
+    """Original DOM evidence, including explicitly incomplete observations."""
 
     def __new__(cls, body, evidence):
         value = super().__new__(cls, body)
@@ -193,12 +193,34 @@ def source_text(row, question=""):
         from llm.v2.agent.browser_research import web_body, validate_body_evidence
         check_cancelled()
         reference_url(row.source_url)
+        row.refresh_from_db(fields=["extracted_text", "url_read_result"])
         if row.extracted_text:
             if len(row.extracted_text.encode("utf-8")) > MAX_TEXT:
                 raise AttachmentProcessingLimit()
             return URLObservedBody(row.extracted_text, {"status": "ok", "source_kind": "original_body_cache",
                                                        "provenance": "legacy_or_observed_original"})
-        result = validate_body_evidence(web_body(row.source_url), row.source_url)
+        result = row.url_read_result
+        if not result:
+            from llm.service.chat_runs import Stopped
+            try:
+                result = validate_body_evidence(web_body(row.source_url, retry=False), row.source_url)
+            except Stopped:
+                raise
+            except Exception as error:
+                if (isinstance(error, ValidationError) or
+                        isinstance(error, BaseExceptionGroup) and error.subgroup((Stopped, ValidationError))):
+                    raise
+                check_cancelled()
+                ChatAttachment.objects.filter(pk=row.pk, session_id=row.session_id).update(url_read_result={"status": "error"})
+                row.url_read_result = {"status": "error"}
+                raise URLBodyUnavailable("error") from None
+            check_cancelled()
+            if result.get("status") == "cancelled":
+                raise Stopped()
+            # Keep failures and partial evidence separate from the successful original cache.
+            if result.get("status") != "ok":
+                ChatAttachment.objects.filter(pk=row.pk, session_id=row.session_id).update(url_read_result=result)
+                row.url_read_result = result
         if result.get("status") == "overflow":
             raise AttachmentProcessingLimit()
         check_cancelled()

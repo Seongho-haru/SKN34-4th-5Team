@@ -151,7 +151,7 @@ def validate_body_evidence(result, url):
     return result
 
 
-def web_body(url):
+def web_body(url, *, retry=True):
     """Deterministic specialist mode; never ask an LLM whether to fetch or accept generated text."""
     import json
     from llm.service.attachments import reference_url, MAX_TEXT
@@ -161,7 +161,7 @@ def web_body(url):
     if not _admission.acquire(blocking=False):
         return {"status": "busy", "source_url": url}
     try:
-        for attempt in range(2):
+        for attempt in range(2 if retry else 1):
             try:
                 result = asyncio.run(browse(url, "", body=True))
                 break
@@ -169,7 +169,7 @@ def web_body(url):
                 if not retryable_transport(error):
                     raise
                 status = transport_status(error) or "error"
-                if attempt:
+                if attempt or not retry:
                     return {"status": status, "source_url": url}
                 check_cancelled()
         check_cancelled()

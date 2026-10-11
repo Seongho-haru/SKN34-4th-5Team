@@ -3,6 +3,7 @@ import uuid
 from collections.abc import Mapping
 
 from django.db import transaction
+from django.db.models import Q
 from django.http import Http404, HttpResponse
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import JSONParser, MultiPartParser
@@ -80,7 +81,8 @@ class ChatAttachmentView(APIView):
                 if not ChatSession.objects.select_for_update().filter(pk=session.id).exists():
                     raise Http404
                 if not is_file:
-                    existing = session.attachments.filter(kind="url", source_url=url).first()
+                    existing = session.attachments.filter(kind="url", source_url=url).filter(
+                        Q(url_read_result={}) | ~Q(extracted_text="")).first()
                     if existing:
                         return Response(metadata(existing), status=201)
                 if is_file:
