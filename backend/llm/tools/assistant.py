@@ -395,15 +395,19 @@ def plan_course(request, _course=None) -> str:
     question = s.get("question") or request
     from llm.v1.rag.club.router import detect_stadium
     original = s.get("question") or ""
-    preferred = detect_stadium(original) or to_stadium_code(s.get("hint") or "")
-    # 모델이 과거 구장을 새 요청에 덧붙여도 실제 사용자 입력·현재 화면 선택을 덮어쓰지 못하게 한다.
+    explicit = detect_stadium(original)
+    saved = s.get("course_memory") or {}
+    confirmed = ((s.get("current_course") or {}).get("stadiumCode")
+                 or (saved.get("current") or {}).get("stadiumCode") or saved.get("stadiumCode"))
+    preferred = explicit or (to_stadium_code(confirmed) if s.get("course_request") == "EDIT" else None) or to_stadium_code(s.get("hint") or "")
+    # 모델 요약·화면 기본값보다 실제 사용자 입력과 수정할 확정 코스를 우선한다.
     if preferred and detect_stadium(question) not in (None, preferred):
         question = original or question
     origin = s.get("origin")
     route_path = s.get("route_path")
     current_course = s.get("current_course")
     # 지도에서 구장을 바꾸면 출발지도 초기화된다. 채팅으로 바꿀 때도 이전 구장의 좌표를 섞지 않는다.
-    if s.get("hint") and preferred != to_stadium_code(s["hint"]):
+    if explicit and s.get("hint") and explicit != to_stadium_code(s["hint"]):
         origin = None
         route_path = None
         current_course = None

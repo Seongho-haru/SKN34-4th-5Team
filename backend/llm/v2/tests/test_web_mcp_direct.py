@@ -66,30 +66,36 @@ class DirectMCPTests(SimpleTestCase):
     async def async_discover(self):
         return self.discovered()
 
-    def test_results_drive_alternative_url_then_main_and_history(self):
+    def test_blocked_page_returns_input_need_without_alternative_search(self):
         def assess(messages):
             result = messages[-1]
-            if isinstance(result, ToolMessage) and result.name == "jev_read_body":
-                self.assertIn("verified menu", str(result.content))
-                return None
             self.assertIsInstance(result, ToolMessage)
+            if result.name == "ask_web_research":
+                self.assertEqual(result.status, "success")
+                self.assertIn("필요한 본문", str(result.content))
+                return None
+            self.assertEqual(result.name, "jev_read_body")
             self.assertEqual(result.status, "error")
             self.assertIn("blocked", str(result.content))
-            return call("jev_read_body", {"url": "https://example.com/alternative"}, "body")
+            return AIMessage("원래 URL 차단; 필요한 본문 텍스트를 메인에 요청")
         out, calls = self.graph([
-            call("ask_web_research", {"task": "메뉴 확인", "summary": "메뉴 근거"}, "web"),
-            call("jev_browse", {"url": "https://example.com/denied", "goal": "menu"}, "browse"),
-            assess, AIMessage("확인 메뉴 https://example.com/alternative; 원래 URL 차단"), AIMessage("메인 최종 안내")])
-        self.assertEqual([n for n, _ in self.executed], ["jev_browse", "jev_read_body"])
+            call("ask_web_research", {"task": "https://example.com/denied 메뉴 확인", "summary": "메뉴 근거"}, "web"),
+            call("jev_read_body", {"url": "https://example.com/denied"}, "body"),
+            assess, AIMessage("메인 최종 안내")])
+        self.assertEqual([n for n, _ in self.executed], ["jev_read_body"])
         self.assertEqual(self.peak, 1)
-        self.assertEqual(len(set(self.loops)), 2)
+        self.assertEqual(len(set(self.loops)), 1)
         self.assertNotIn("web_search", calls[0]["tools"])
-        self.assertIn("jev_browse", calls[1]["tools"])
+        self.assertNotIn("jev_browse", calls[1]["tools"])
         self.assertIn("jev_read_body", calls[1]["tools"])
-        self.assertIn("web_search", calls[1]["tools"])
+        self.assertNotIn("web_search", calls[1]["tools"])
         self.assertNotIn("research_public_web", calls[1]["tools"])
         parent = next(m for m in out["messages"] if isinstance(m, ToolMessage))
-        self.assertTrue(any(isinstance(m, ToolMessage) and m.name == "jev_read_body" and m.artifact for m in parent.artifact))
+        reads = [m for m in parent.artifact if isinstance(m, ToolMessage) and m.name == "jev_read_body"]
+        self.assertEqual(len(reads), 1)
+        self.assertEqual(reads[0].status, "error")
+        self.assertIn("blocked", str(reads[0].content))
+        self.assertIsNone(reads[0].artifact)
         from llm.serializer.message import project_history, project_event
         out["messages"][-1].id = "answer"
         history = project_history(out["messages"], {"q": {"status": "completed", "answer_id": "answer"}}, detail=True)
@@ -115,7 +121,7 @@ class DirectMCPTests(SimpleTestCase):
                                  call("jev_read_body", {"url": "https://example.com/menu"}, "body"),
                                  AIMessage("메뉴 확인"), AIMessage("메인")], ())
         self.assertEqual(set(calls[0]["tools"]), set(chain.sub_agents.SPECIALISTS) | {"present_planning_questions"})
-        self.assertEqual(set(calls[1]["tools"]), {"jev_browse", "jev_read_body", "web_search"})
+        self.assertEqual(set(calls[1]["tools"]), {"jev_read_body"})
         self.assertEqual(self.executed, [("jev_read_body", {"url": "https://example.com/menu"})])
         self.assertEqual(next(m for m in out["messages"] if isinstance(m, ToolMessage)).status, "success")
 
@@ -186,6 +192,40 @@ class DirectMCPTests(SimpleTestCase):
                 self.assertEqual(result.status, "success" if expected == "ok" else "error")
                 if expected != "ok":
                     self.assertEqual(json.loads(result.content)["status"], expected)
+
+    def test_actual_transport_errors_at_converter_boundary(self):
+        from unittest.mock import AsyncMock
+        from llm.v2.tests.test_browser_research import transport_cases
+        for error, retryable in transport_cases():
+            attempts = []
+            async def boundary(request, handler):
+                attempts.append(request.name)
+                if len(attempts) == 1:
+                    raise error
+                return CallToolResult(content=[TextContent(type="text", text=json.dumps({"status": "ok", "body": "verified"}))])
+            with self.subTest(error=repr(error)), patch.object(browser_research, "discover_tools",
+                    AsyncMock(return_value=self.discovered(boundary))):
+                body = browser_research.direct_tools()[1]
+                result = body.invoke({"name": body.name, "id": "body", "type": "tool_call",
+                                      "args": {"url": "https://example.com/article"}})
+                self.assertEqual(result.status, "success" if retryable else "error")
+                self.assertEqual(len(attempts), 2 if retryable else 1)
+                self.assertFalse(browser_research._admission.locked())
+
+    def test_direct_cancellation_prevents_retry(self):
+        from unittest.mock import AsyncMock
+        from llm.service.chat_runs import Stopped
+        attempts = []
+        async def boundary(request, handler):
+            attempts.append(request.name)
+            raise TimeoutError()
+        with patch.object(browser_research, "discover_tools", AsyncMock(return_value=self.discovered(boundary))):
+            body = browser_research.direct_tools()[1]
+        with patch("llm.service.chat_runs.check_cancelled", side_effect=[None, None, Stopped]), self.assertRaises(Stopped):
+            body.invoke({"name": body.name, "id": "body", "type": "tool_call",
+                         "args": {"url": "https://example.com/article"}})
+        self.assertEqual(len(attempts), 1)
+        self.assertFalse(browser_research._admission.locked())
 
     def test_nested_status_is_not_invented_success(self):
         for status in ("blocked", "busy", "timeout", "error", "partial", "overflow"):

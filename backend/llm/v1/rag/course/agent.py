@@ -1435,12 +1435,16 @@ def answer(question, history=None, hint_stadium=None, origin=None, requested_aft
         structured.date_in(question, datetime.now(ZoneInfo("Asia/Seoul")).date().isoformat())
     except structured.DateRequestError as exc:
         return {"answer": str(exc), "sources": [], "places": [], "route": "course:invalid_date"}
-    selected_code = detect_stadium(question) or hint_stadium or (current_course or {}).get("stadiumCode")
-    selected_writer = (current_course or {}).get("writerState")
-    selected_origin = selected_writer.get("origin") if selected_writer is not None else origin
     anchored_request = selected_relative_request(question, current_course)
     if anchored_request:
         course_request = "EDIT"
+    if course_request == "EDIT" and not detect_stadium(question):
+        hint_stadium = ((current_course or {}).get("stadiumCode")
+                        or ((course_memory or {}).get("current") or {}).get("stadiumCode")
+                        or (course_memory or {}).get("stadiumCode") or hint_stadium)
+    selected_code = detect_stadium(question) or hint_stadium or (current_course or {}).get("stadiumCode")
+    selected_writer = (current_course or {}).get("writerState")
+    selected_origin = selected_writer.get("origin") if selected_writer is not None else origin
     if course_request == "NEW":
         history, course_memory, current_course, origin = [], memory.empty(), None, selected_origin
         hint_stadium = selected_code

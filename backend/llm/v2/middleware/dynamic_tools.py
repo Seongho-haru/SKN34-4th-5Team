@@ -80,6 +80,14 @@ class DynamicToolMiddleware(AgentMiddleware):
         return False
 
     def wrap_tool_call(self, request, handler):
+        from llm.v2.agent.browser_research import allow_new_source_search
+        token = allow_new_source_search.set(False)
+        try:
+            return self._tool_call(request, handler)
+        finally:
+            allow_new_source_search.reset(token)
+
+    def _tool_call(self, request, handler):
         name = request.tool_call["name"]
         invalid_attachment_call = (self.capability_tools is not None and name == "jev_read_body" and
                                    (request.tool_call["id"] != request.state.get("attachment_web_call_id")
@@ -88,6 +96,19 @@ class DynamicToolMiddleware(AgentMiddleware):
             return ToolMessage(
                 content=f"허용되지 않은 도구입니다: {name}", tool_call_id=request.tool_call["id"], name=name, status="error",
             )
+        if name == "jev_read_body" and self.capability_tools is None:
+            # 내부 읽기가 일시 오류 복구를 소유한다. 모델이 같은 실패 읽기를 다시 실행하지 않는다.
+            failed = set()
+            for message in reversed(request.state.get("messages") or []):
+                if isinstance(message, HumanMessage):
+                    break
+                if isinstance(message, ToolMessage) and message.name == name and message.status == "error":
+                    failed.add(message.tool_call_id)
+                if isinstance(message, AIMessage) and any(
+                        call["id"] in failed and call["name"] == name and call.get("args") == request.tool_call.get("args")
+                        for call in message.tool_calls):
+                    return ToolMessage("본문 확보 실패: 추가 읽기 없이 필요한 본문 텍스트를 메인에 반환하세요.",
+                                       tool_call_id=request.tool_call["id"], name=name, status="error")
         if name in MIGRATED_TOOLS:
             from llm.tools.assistant import request_state
             from llm.v2.agent.course_output import public_course

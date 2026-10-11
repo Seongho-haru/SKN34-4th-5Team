@@ -155,7 +155,10 @@ class EvaluationTest(unittest.TestCase):
                                                        (*chain.sub_agents.SPECIALISTS, 'present_planning_questions'))
             self.assertEqual(dynamic.allowed(state), frozenset(calls[0]['tools']))
             self.assertEqual(row, original)
-            self.assertIn('<current_course_destination>', adapted[-1].content)
+            if state['decision'].get('course_request') == 'EDIT':
+                self.assertNotIn('<current_course_destination>', adapted[-1].content)
+            else:
+                self.assertIn('<current_course_destination>', adapted[-1].content)
 
     def test_empty_selection_cli(self):
         with patch.object(sys, 'argv', ['run.py', 'offline', '--ids', 'greeting', '--output', '/Users/yunseongho/.hermes/cache/scratch/never-written-empty.json']):

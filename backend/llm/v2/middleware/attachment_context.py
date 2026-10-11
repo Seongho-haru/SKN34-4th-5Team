@@ -51,7 +51,7 @@ def direct_context(rows, texts=None):
                       "partial": "본문 확인 불완전", "blocked": "접근 제한 확인",
                       "error": "읽기 오류", "cancelled": "읽기 취소"}.get(text.status, "읽기 상태 미확인")
             parts.append(f"<untrusted_unavailable_source_{boundary} {json.dumps(metadata, ensure_ascii=False)}>\n"
-                         f"이 출처에만 해당: {reason}. 제공된 본문 근거가 없다. 이 출처가 답변에 꼭 필요하면 본문을 붙여 넣거나 다른 공개 링크를 요청한다.\n</untrusted_unavailable_source_{boundary}>")
+                         f"이 출처에만 해당: {reason}. 제공된 본문 근거가 없다. 이 출처가 답변에 꼭 필요하면 개인정보·인증 정보를 제외한 필요한 본문을 텍스트로 붙여 넣도록 요청하고 대기한다. 반복 조회·새 출처 검색·전문 재조사를 하지 않는다.\n</untrusted_unavailable_source_{boundary}>")
             continue
         total_bytes += len(text.encode("utf-8"))
         if total_bytes > attachments.MAX_TEXT:

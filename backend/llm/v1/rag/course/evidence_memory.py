@@ -17,7 +17,7 @@ from django.core.exceptions import ValidationError
 from django.db import DatabaseError
 from django.utils import timezone
 from langchain_core.messages import HumanMessage, SystemMessage
-from llm.v2.agent.browser_research import structured_search
+from llm.v2.agent.browser_research import allow_new_source_search, structured_search
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 from llm.v1.progress import config_kwargs, ProgressCancelled, ProgressStorageError
@@ -612,7 +612,7 @@ def _enrich(candidates, conditions):
                             attribute=r.attribute, term=r.term, status=status,
                             reason_code="provider_error" if failed else "stored" if count else "verified_not_stored" if rows else "not_found",
                             search_calls=calls if i == j == 0 else 0,
-                            model_calls=(1 + budget.get("semantic_calls", 0) - semantic_before) if i == j == 0 else 0,
+                            model_calls=(int(allow_new_source_search.get()) + budget.get("semantic_calls", 0) - semantic_before) if i == j == 0 else 0,
                             started_at=started, finished_at=finished, next_retry_at=finished + timedelta(minutes=15 if failed else 60))
                 except (DatabaseError, ValidationError, ValueError):
                     log.warning("place evidence storage unavailable")

@@ -178,6 +178,20 @@ class CourseEvidenceTests(TestCase):
         self.assertEqual(PlaceKnowledgeObservation.objects.count(), 0)
         self.assertEqual(PlaceEnrichmentAttempt.objects.get().reason_code, "provider_error")
 
+    def test_policy_blocked_search_records_zero_provider_model_calls(self):
+        from llm.v2.agent.browser_research import allow_new_source_search
+        token = allow_new_source_search.set(False)
+        try:
+            with patch.object(evidence, "requirements", return_value=[self.requirement]), patch("openai.OpenAI") as provider:
+                self.assertEqual(evidence.enrich([PLACE], ["돈까스 메뉴"]), [])
+            provider.assert_not_called()
+        finally:
+            allow_new_source_search.reset(token)
+        attempt = PlaceEnrichmentAttempt.objects.get()
+        self.assertEqual((attempt.search_calls, attempt.model_calls), (0, 0))
+        self.assertEqual((attempt.status, attempt.reason_code), ("api_error", "provider_error"))
+        self.assertEqual(PlaceKnowledgeObservation.objects.count(), 0)
+
     def test_turn_budget_spans_nested_lookups_and_resets_for_next_turn(self):
         places = [{**PLACE, "placeId": f"fixture:budget-{i}"} for i in range(3)]
         with patch("llm.v1.rag.course.agent.llm") as model, \

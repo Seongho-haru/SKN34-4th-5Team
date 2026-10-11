@@ -5,6 +5,10 @@ from datetime import timedelta
 from functools import cache
 
 import json
+from contextvars import ContextVar
+
+# V2 도구 실행 경계에서만 적용; 기존 V1 호출 계약은 바꾸지 않는다.
+allow_new_source_search = ContextVar("allow_new_source_search", default=True)
 
 from langchain_core.tools import ToolException
 
@@ -50,7 +54,7 @@ async def cancellable_call(awaitable):
     finally:
         if not task.done():
             task.cancel()
-            await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)
 
 
 # ponytail: one process-wide browser admission, no queue; scale by separate browser services.
@@ -58,8 +62,30 @@ from threading import Lock
 _admission = Lock()
 
 
+def retryable_transport(error):
+    """Retry only known temporary failures, including every member/cause of a group."""
+    import httpx
+    import httpcore
+    import anyio
+    from mcp.shared.exceptions import McpError
+    from mcp.types import CONNECTION_CLOSED
+    cause = error.__cause__ or (None if error.__suppress_context__ else error.__context__)
+    if cause is not None and not retryable_transport(cause):
+        return False
+    if isinstance(error, BaseExceptionGroup):
+        return all(retryable_transport(item) for item in error.exceptions)
+    if isinstance(error, (TimeoutError, ConnectionResetError, ConnectionRefusedError, ConnectionAbortedError,
+                          httpx.TimeoutException, httpx.NetworkError, httpx.RemoteProtocolError,
+                          httpcore.TimeoutException, httpcore.NetworkError, httpcore.RemoteProtocolError,
+                          anyio.BrokenResourceError, anyio.ClosedResourceError, anyio.EndOfStream)):
+        return True
+    if isinstance(error, httpx.HTTPStatusError):
+        return error.response.status_code in {500, 502, 503, 504}
+    return isinstance(error, McpError) and error.error.code in {408, 500, 502, 503, 504, CONNECTION_CLOSED}
+
+
 def transport_status(error):
-    """Only installed transport failures are recoverable; mixed groups still fail closed."""
+    """Normalize installed transport failures; this is not retry permission."""
     import httpx
     import anyio
     from mcp.shared.exceptions import McpError
@@ -135,13 +161,17 @@ def web_body(url):
     if not _admission.acquire(blocking=False):
         return {"status": "busy", "source_url": url}
     try:
-        try:
-            result = asyncio.run(browse(url, "", body=True))
-        except Exception as error:
-            status = transport_status(error)
-            if status is None:
-                raise
-            return {"status": status, "source_url": url}
+        for attempt in range(2):
+            try:
+                result = asyncio.run(browse(url, "", body=True))
+                break
+            except Exception as error:
+                if not retryable_transport(error):
+                    raise
+                status = transport_status(error) or "error"
+                if attempt:
+                    return {"status": status, "source_url": url}
+                check_cancelled()
         check_cancelled()
         try:
             if isinstance(result, list):
@@ -218,6 +248,8 @@ def read_evidence(reader, url, terms):
 
 def structured_search(**kwargs):
     """Domain evidence schemas stay with their validators; external search belongs here."""
+    if not allow_new_source_search.get():
+        raise ToolException("추가 리서치·새 출처 검색은 지원하지 않습니다. 기존 근거로 확인되지 않은 조건은 미확인으로 반환하세요.")
     from openai import OpenAI
     from llm.service import usage
     from llm.service.chat_runs import check_cancelled
@@ -283,13 +315,19 @@ def direct_tools():
             if not _admission.acquire(blocking=False):
                 raise ToolException(json.dumps({"status": "busy"}))
             try:
-                try:
-                    content, artifact = asyncio.run(cancellable_call(_tool.coroutine(**arguments)))
-                except Exception as exc:
-                    from llm.service.chat_runs import Stopped
-                    if isinstance(exc, Stopped):
-                        raise
-                    raise ToolException(json.dumps({"status": "timeout" if isinstance(exc, TimeoutError) else "error"})) from exc
+                for attempt in range(2):
+                    try:
+                        content, artifact = asyncio.run(cancellable_call(_tool.coroutine(**arguments)))
+                        break
+                    except Exception as exc:
+                        from llm.service.chat_runs import Stopped
+                        if isinstance(exc, Stopped):
+                            raise
+                        retryable = _tool.name == "jev_read_body" and retryable_transport(exc)
+                        if retryable and not attempt:
+                            check_cancelled()
+                            continue
+                        raise ToolException(json.dumps({"status": transport_status(exc) or "error", "retry_exhausted": retryable})) from exc
                 check_cancelled()
                 structured = artifact.get("structured_content") if isinstance(artifact, dict) else None
                 if len(json.dumps(content, ensure_ascii=False).encode()) > MAX_TEXT or (structured is not None and len(json.dumps(structured, ensure_ascii=False).encode()) > MAX_TEXT):

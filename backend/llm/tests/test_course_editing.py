@@ -177,6 +177,47 @@ class CourseEditingTest(SimpleTestCase):
         with assistant.request_state("JAMSIL", "카페만 바꿔", [], current_course=CURRENT):
             self.assertEqual(assistant.plan_course("엉뚱한 요약", _course=FakeCourse), "변경")
 
+    def test_edit_destination_uses_confirmed_course_not_screen_default(self):
+        from types import SimpleNamespace
+        for current, saved in ((CURRENT, {}), (None, {"current": CURRENT, "stadiumCode": "JAMSIL"})):
+            for question, mode, expected in (("카페만 바꿔줘", "EDIT", "JAMSIL"),
+                                             ("고척으로 바꿔줘", "EDIT", "GOCHEOK"),
+                                             ("새로 짜줘", "NEW", "SAJIK")):
+                with self.subTest(question=question, current=bool(current)), assistant.request_state(
+                        "SAJIK", question, [], current_course=current) as state, patch.object(
+                        editing, "interpret", return_value=plan("clarify", [], clarification="확인")) as interpret, patch.object(
+                        editing, "answer", return_value={"answer": "확인", "places": []}), patch.object(
+                        agent, "_answer", return_value={"answer": "새 코스", "places": []}) as generate:
+                    state.update(course_request=mode, course_memory=deepcopy(saved))
+                    assistant.plan_course("사직 카페 변경", _course=agent)
+                    self.assertEqual(interpret.call_args.args[1]["stadiumCode"], expected)
+                    if mode == "EDIT" and expected == "JAMSIL":
+                        self.assertEqual(interpret.call_args.args[1]["places"], PLACES)
+                        generate.assert_not_called()
+                    if mode == "NEW":
+                        self.assertEqual(interpret.call_args.args[1]["places"], [])
+                        self.assertEqual(interpret.call_args.args[2], [])
+                        generate.assert_called_once()
+        # The V2 middleware must carry EDIT into the same shared caller.
+        request = SimpleNamespace(tool_call={"name": "plan_course", "id": "edit", "args": {}},
+                                  state={"messages": [HumanMessage("카페만 바꿔줘")],
+                                         "decision": {"course_request": "EDIT"},
+                                         "context": {"stadium": "SAJIK", "currentCourse": CURRENT}})
+        with patch.object(agent, "answer", return_value={"answer": "확인"}) as answer:
+            DynamicToolMiddleware(["plan_course"]).wrap_tool_call(request, lambda _: assistant.plan_course("사직 카페"))
+        self.assertEqual(answer.call_args.kwargs["hint_stadium"], "JAMSIL")
+        self.assertEqual(answer.call_args.kwargs["current_course"], CURRENT)
+
+    def test_direct_edit_destination_uses_saved_course_before_hint(self):
+        for kwargs in ({"current_course": CURRENT}, {"course_memory": {"current": CURRENT}}):
+            with self.subTest(kwargs=kwargs), patch.object(editing, "interpret", return_value=plan(
+                    "clarify", [], clarification="확인")) as interpret, patch.object(
+                    editing, "answer", return_value={"answer": "확인"}), patch.object(agent, "_answer") as generate:
+                agent.answer("카페만 바꿔줘", hint_stadium="SAJIK", course_request="EDIT", **kwargs)
+            self.assertEqual(interpret.call_args.args[1]["stadiumCode"], "JAMSIL")
+            self.assertEqual(interpret.call_args.args[1]["places"], PLACES)
+            generate.assert_not_called()
+
     def test_failed_edit_answer_is_not_rewritten_as_success(self):
         from types import SimpleNamespace
         call = AIMessage("", tool_calls=[{"name": "plan_course", "id": "c", "args": {"request": "교체"}}])
